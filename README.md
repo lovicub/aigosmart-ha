@@ -41,6 +41,23 @@ Read access and a temperature write were verified during the original investigat
 the published release's control paths are covered by offline tests, not a new live
 hardware certification. Confirm the TSL on your own model before relying on controls.
 
+### ✅ Tested Devices
+
+| Device | Firmware | Status |
+|---|---|---|
+| Aigostar Smart Wi-Fi Kettle (black) | `app-2.1.0-20231017.144720` | ✅ Tested and working |
+
+**Confirmed working features:**
+- Power ON/OFF
+- Target temperature control
+- Heating status monitoring
+- Home Assistant integration
+- AigoSmart Premium Card
+
+**Note:** Tested on my personal Aigostar smart kettle. Compatibility with other Aigostar/AigoSmart devices has not yet been verified.
+
+If you successfully test the integration with another model or firmware version, please open a GitHub issue so I can update the compatibility list.
+
 ## Installation via HACS
 
 After this repository is published:
