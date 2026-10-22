@@ -5,6 +5,7 @@ Alibaba IoT cloud API. Version **0.1.1**, development status.
 
 Optional dashboard companion: [AigoSmart Premium Card](https://github.com/lovicub/aigosmart-premium-card).
 The integration works independently; the card has its own installation and configuration.
+<img width="1986" height="1242" alt="image" src="https://github.com/user-attachments/assets/41df2fe4-09f4-41ee-a909-ca9b675c9370" />
 
 ## Features
 
