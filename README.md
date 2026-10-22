@@ -94,12 +94,6 @@ Confirmation reads occur immediately, then after 2 and another 5 seconds. A matc
 read is evidence of state, not proof that a particular request caused it. Writes
 are never replayed automatically after a timeout.
 
-## Screenshots
-
-Screenshots from a real test installation have not been supplied. See
-[the screenshot contribution guide](docs/screenshots/README.md). No generated UI
-mockups are presented as proof of functionality.
-
 ## Troubleshooting
 
 - **Unavailable:** check the kettle in the official app, internet connectivity and
