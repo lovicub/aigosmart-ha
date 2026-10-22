@@ -1,0 +1,27 @@
+# Credentials, local HA data and private captures
+.env
+.env.*
+!.env.example
+.storage/
+.aws/
+.codex/
+.agents/
+secrets.yaml
+configuration.yaml
+*.pem
+*.key
+*.log
+reports/
+# Python and tooling
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+# Local build output (the card JS is tracked at repository root)
+dist/
+node_modules/
+.DS_Store
+Thumbs.db

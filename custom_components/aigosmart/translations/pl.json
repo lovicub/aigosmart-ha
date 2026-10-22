@@ -1,0 +1,48 @@
+{
+  "title": "AigoSmart HA",
+  "config": {
+    "step": {
+      "user": {
+        "title": "AigoSmart HA",
+        "data": {
+          "email": "E-mail",
+          "password": "Hasło"
+        }
+      },
+      "security_code": {
+        "data": {
+          "send_code": "Wyślij kod e-mailem",
+          "security_code": "Kod weryfikacyjny"
+        }
+      },
+      "device": {
+        "data": {
+          "device": "Urządzenie"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Ponowne uwierzytelnienie"
+      }
+    },
+    "error": {
+      "cannot_connect": "Brak połączenia",
+      "invalid_auth": "Błędne dane logowania",
+      "cannot_send_code": "Nie można wysłać kodu"
+    },
+    "abort": {
+      "already_configured": "Urządzenie jest już skonfigurowane",
+      "no_devices": "Brak urządzeń",
+      "wrong_account": "Użyj pierwotnego konta z tym samym urządzeniem",
+      "reauth_successful": "Uwierzytelnienie zaktualizowane"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Interwał odczytu (sekundy)"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "source": "live-tsl",
+  "synthetic_fixture": true,
+  "properties": [
+    {
+      "identifier": "Target_temperature",
+      "evidence": "tsl",
+      "data_type": "int",
+      "access": "read-write",
+      "constraints": {
+        "min": "0",
+        "max": "100",
+        "step": "1",
+        "unit": "\u00b0C"
+      },
+      "name": "Target_temperature",
+      "description": null
+    },
+    {
+      "identifier": "Time",
+      "evidence": "tsl",
+      "data_type": "int",
+      "access": "read-write",
+      "constraints": {
+        "min": "0",
+        "max": "720",
+        "step": "1",
+        "unit": "min"
+      },
+      "name": "Time",
+      "description": null
+    },
+    {
+      "identifier": "status",
+      "evidence": "tsl",
+      "data_type": "enum",
+      "access": "read-write",
+      "constraints": {
+        "1": "Stand by",
+        "2": "Heating",
+        "3": "Cooling",
+        "4": "Keeping warm"
+      },
+      "name": "status",
+      "description": null
+    },
+    {
+      "identifier": "Mode",
+      "evidence": "tsl",
+      "data_type": "enum",
+      "access": "read-write",
+      "constraints": {
+        "0": "One-click boil",
+        "1": "Boil and keep warm",
+        "2": "Heating and keep warm"
+      },
+      "name": "Mode",
+      "description": null
+    },
+    {
+      "identifier": "heatpreservation",
+      "evidence": "tsl",
+      "data_type": "int",
+      "access": "read-write",
+      "constraints": {
+        "min": "0",
+        "max": "13",
+        "step": "1",
+        "unit": "h"
+      },
+      "name": "heatpreservation",
+      "description": null
+    },
+    {
+      "identifier": "HeatingSwitch",
+      "evidence": "tsl",
+      "data_type": "bool",
+      "access": "read-write",
+      "constraints": {
+        "0": "Turn off",
+        "1": "Turn on"
+      },
+      "name": "HeatingSwitch",
+      "description": null
+    }
+  ]
+}

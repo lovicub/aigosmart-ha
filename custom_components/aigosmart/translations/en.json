@@ -1,0 +1,48 @@
+{
+  "title": "AigoSmart HA",
+  "config": {
+    "step": {
+      "user": {
+        "title": "AigoSmart HA",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        }
+      },
+      "security_code": {
+        "data": {
+          "send_code": "Send verification email",
+          "security_code": "Security code"
+        }
+      },
+      "device": {
+        "data": {
+          "device": "Device"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate"
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect",
+      "invalid_auth": "Invalid credentials",
+      "cannot_send_code": "Cannot send code"
+    },
+    "abort": {
+      "already_configured": "Device already configured",
+      "no_devices": "No devices available",
+      "wrong_account": "Use the original account with the original device",
+      "reauth_successful": "Authentication updated"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Polling interval (seconds)"
+        }
+      }
+    }
+  }
+}

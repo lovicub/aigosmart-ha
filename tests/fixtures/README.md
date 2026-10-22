@@ -1,0 +1,1 @@
+Synthetic TSL fixture built from documented property types, ranges and enums. No captured API responses, device or account identifiers are included. The live-tsl source flag exercises the existing validator contract in offline tests only.
