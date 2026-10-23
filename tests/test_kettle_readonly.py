@@ -21,7 +21,7 @@ class Tests(unittest.TestCase):
         return [{'access_token': 'ACCESS'}, {'code': 'AUTH'},
                 {'code': 200, 'data': {'oaApiGatewayEndpoint': k.OA}},
                 {'data': {'data': {'loginSuccessResult': {'sid': 'SID'}}}},
-                {'code': 200, 'data': {'iotToken': 'TOKEN', 'refreshToken': 'PRIVATE'}},
+                {'code': 200, 'data': {'iotToken': 'TOKEN', 'refreshToken': 'PRIVATE', 'identityId': 'IDENTITY_PRIVATE', 'iotTokenExpire': 7200, 'refreshTokenExpire': 86400}},
                 {'code': 200, 'data': {'data': [{'iotId': 'DEVICE', 'deviceName': 'PRIVATE'}]}},
                 {'code': 200, 'data': {'Temperature': {'value': 85}, 'Mode': {'value': 'boil'}}}]
 

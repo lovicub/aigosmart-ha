@@ -1,4 +1,4 @@
-"""Read-only AigoSmart inspection; credentials and sessions live only in memory.
+"""AigoSmart protocol; session persistence is owned by the HA integration.
 
 Protocol reviewed against MarcoM1993/ha-aigostar commit
 39f7bab1edd36161e41430ed1e01439e4e8b51ab (alibaba_api.py, const.py).
@@ -39,6 +39,7 @@ AUTHORIZE = '/v1.0/connect/authorize'
 REGION_PATH = '/living/account/region/get'
 OA_PATH = '/api/prd/loginbyoauth.json'
 SESSION = '/account/createSessionByAuthCode'
+REFRESH = '/account/checkOrRefreshSession'
 DEVICES = '/uc/listBindingByAccount'
 PROPERTIES = '/thing/properties/get'
 TSL = '/thing/tsl/get'
@@ -54,6 +55,7 @@ SAFE_CODES = frozenset({'UC/NEED_SECURITY_CODE', 'invalid_grant', 'invalid_clien
                         'INVALID_SECURITY_CODE', 'SECURITY_CODE_EXPIRED', 'UC/INVALID_SECURITY_CODE',
                         'UC/SECURITY_CODE_EXPIRED', 'CAPTCHA_REQUIRED', 'NEED_CAPTCHA',
                         'UC/NEED_CAPTCHA', 'VERIFY_CODE_ERROR', 'VERIFY_CODE_EXPIRED',
+                        '2062', '100001', '100003', '100004', '100005',
                         '200', '400', '401', '403', '404', '429', '500', '502', '503'})
 MAX_RESPONSE = 2_000_000
 
@@ -232,6 +234,7 @@ class Client:
         self.send = send
         self.debug = debug
         self.token = None
+        self.session = {}
 
     def authorize_property_write(self, method, url, body):
         """Read-only clients never authorize writes."""
@@ -241,7 +244,7 @@ class Client:
         parts = urllib.parse.urlsplit(url)
         allowed = {(UC, LOGIN, 'POST'), (UC, AUTHORIZE, 'GET'),
                    (REGION, REGION_PATH, 'POST'), ('https://' + OA, OA_PATH, 'POST'),
-                   (IOT, SESSION, 'POST'), (IOT, DEVICES, 'POST'),
+                   (IOT, SESSION, 'POST'), (IOT, REFRESH, 'POST'), (IOT, DEVICES, 'POST'),
                    (IOT, PROPERTIES, 'POST'), (IOT, TSL, 'POST'),
                    (SMART, SEND_CODE, 'POST')}
         if ((f'{parts.scheme}://{parts.netloc}', parts.path, method) not in allowed
@@ -379,7 +382,7 @@ class Client:
             resource = path + '?' + '&'.join(k + '=' + v for k, v in sorted(fields.items()))
         else:
             request = {'language': 'en-US', 'appKey': APP_KEY, 'apiVer': version}
-            if self.token:
+            if self.token and path != REFRESH:
                 request['iotToken'] = self.token
             body = json.dumps({'id': str(uuid.uuid4()).upper(), 'version': '1.0.0',
                                'params': params, 'request': request},
@@ -422,6 +425,7 @@ class Client:
 
     def login(self, username, password, *, interactive=False):
         self.token = None
+        self.session = {}
         fields = {'account_type': 'email' if '@' in username else 'phone_number',
             'username': username.strip(), 'password': encrypt_password(password),
             'grant_type': 'password', 'client_id': CLIENT_ID, 'client_secret': CLIENT_SECRET,
@@ -452,7 +456,50 @@ class Client:
             raise APIError('Nieprawidłowa odpowiedź logowania OA.') from None
         session = self.signed(IOT, SESSION, {'request': {'authCode': sid,
             'appKey': APP_KEY, 'accountType': 'OA_SESSION'}}, '1.0.4')
-        self.token = required(session.get('data'), 'iotToken')
+        self.accept_session(session.get('data'))
+
+    def accept_session(self, data, *, refresh=False):
+        """API expiry fields are durations in seconds, never absolute timestamps."""
+        now = time.time()
+        previous = self.session if refresh else {}
+        session = dict(previous)
+        if not refresh:
+            session['last_refresh'] = None
+        session['iot_token'] = required(data, 'iotToken')
+        for wire, local in (('refreshToken', 'refresh_token'), ('identityId', 'identity_id')):
+            if wire in data or not refresh:
+                session[local] = required(data, wire)
+        for wire, local in (('iotTokenExpire', 'iot_token'), ('refreshTokenExpire', 'refresh_token')):
+            if wire not in data:
+                if not refresh or wire == 'iotTokenExpire' or (refresh and 'refreshToken' in data
+                        and data['refreshToken'] != previous.get('refresh_token')):
+                    raise APIError('Missing session lifetime')
+                continue
+            value = data[wire]
+            try:
+                ttl = float(value) if not isinstance(value, bool) else float('nan')
+            except (ValueError, TypeError):
+                ttl = float('nan')
+            if not math.isfinite(ttl) or ttl <= 0:
+                raise APIError('Invalid session lifetime')
+            session[local + '_ttl'] = ttl
+            session[local + '_expires_at'] = now + ttl
+        if refresh:
+            session['last_refresh'] = now
+        self.session = session
+        self.token = session['iot_token']
+
+    def restore_session(self, data):
+        keys = ('iot_token', 'refresh_token', 'identity_id', 'iot_token_ttl',
+                'refresh_token_ttl', 'iot_token_expires_at', 'refresh_token_expires_at', 'last_refresh')
+        self.session = {key: data[key] for key in keys if key in data}
+        self.token = self.session.get('iot_token')
+
+    def refresh_iot_token_sync(self):
+        result = self.signed(IOT, REFRESH, {
+            'refreshToken': required(self.session, 'refresh_token'),
+            'identityId': required(self.session, 'identity_id')}, '1.0.4')
+        self.accept_session(result.get('data'), refresh=True)
 
     def devices(self):
         devices = []

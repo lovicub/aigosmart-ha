@@ -9,7 +9,7 @@ from .protocol import NeedSecurityCodeError
 from .const import DOMAIN, DEFAULT_INTERVAL
 
 class AigoFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self):
         self.client = AigoClient()
@@ -42,9 +42,10 @@ class AigoFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if (self.credentials['email'].strip().casefold() != entry.data['email'].strip().casefold()
                     or not any(d.get('iotId') == entry.data['device_id'] for d in self.devices)):
                 return self.async_abort(reason='wrong_account')
-            data = {'email': self.credentials['email'], 'iot_token': self.client.token}
+            data = {'email': self.credentials['email'], 'iot_token': self.client.token, **self.client.session}
             self.credentials.clear()
             self.client.token = None
+            self.client.session.clear()
             return self.async_update_reload_and_abort(entry, data_updates=data)
         return await self.async_step_device()
 
@@ -75,9 +76,10 @@ class AigoFlow(config_entries.ConfigFlow, domain=DOMAIN):
             device_id = self.devices[int(index)]['iotId']
             await self.async_set_unique_id(hashlib.sha256(device_id.encode()).hexdigest())
             self._abort_if_unique_id_configured()
-            data = {'email': self.credentials['email'], 'iot_token': self.client.token, 'device_id': device_id}
+            data = {'email': self.credentials['email'], 'iot_token': self.client.token, 'device_id': device_id, **self.client.session}
             self.credentials.clear()
             self.client.token = None
+            self.client.session.clear()
             return self.async_create_entry(title='AigoSmart kettle', data=data)
         return self.async_show_form(step_id='device', data_schema=vol.Schema({vol.Required('device'): vol.In(choices)}))
 

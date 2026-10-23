@@ -66,3 +66,16 @@ byte-identical to the supplied file. The two-repository scan covered 58 files:
 no additional secret candidates were found in the card. Browser/error-log and
 provenance observations are documented in the card's separate security report.
 The Python integration was not changed during this handoff update.
+
+
+## v0.1.2 session handling review (2026-10-23)
+
+Config Entry data now includes IoT/refresh tokens, identityId, API TTLs, absolute
+expiry timestamps and the last successful refresh. These are protected by HA's
+configuration/backup access controls, not encrypted by this integration. The
+new diagnostic export uses an explicit allowlist of three non-sensitive values;
+it does not export entry data, device identifiers, email or credentials.
+Refresh diagnostics and exceptions use fixed messages/sanitized error codes.
+Offline tests assert tokens/identity IDs are absent from debug logs and entity
+attributes. Writes remain single-attempt; refresh and read retries cannot invoke
+the write path. No credentials were sent to any API for v0.1.2 verification.

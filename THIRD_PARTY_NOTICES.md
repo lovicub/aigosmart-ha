@@ -36,3 +36,13 @@ Sources checked:
 - https://github.com/alecthomas/voluptuous/blob/master/COPYING
 - https://github.com/MarcoM1993/ha-aigostar
 - https://docs.python.org/3/license.html
+
+
+The v0.1.2 refresh request envelope was reviewed against
+[`refresh_iot_token_sync()` in MarcoM1993/ha-aigostar](https://github.com/MarcoM1993/ha-aigostar/blob/main/custom_components/aigostar/alibaba_api.py).
+The implementation here is independent; no upstream module is imported or run.
+Alibaba's [OpenAccount guide](https://g.alicdn.com/linkbusiness-fe/iotx-linkbusiness-common/1.0.5/sitedocs/dch3zc.html)
+documents `iotTokenExpire` and `refreshTokenExpire` as durations in seconds.
+The [Alibaba error code dictionary](https://help.aliyun.com/en/document_detail/127995.html)
+provides the reviewed authentication error vocabulary, including 100003 for an
+invalid or expired refresh token. Unknown codes and server messages are redacted.

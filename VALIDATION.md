@@ -1,30 +1,54 @@
-# Validation results
+# Validation results — v0.1.2
 
-Preparation date: 2026-10-22. Integration version: 0.1.1.
+Date: 2026-10-23. Python 3.14.4, installed Home Assistant 2026.10.2.
 
 | Check | Result |
 | --- | --- |
-| Original source suite, cryptography 48.0.1 | 91 passed |
-| Independent publication directory, cryptography 48.0.1 | 91 passed |
-| Independent publication directory, cryptography 50.0.1 | 91 passed |
-| Runtime Python source comparison | All 13 integration Python files AST-identical; 12 byte-identical, model.py trailing blank lines normalized |
-| Script comparison | All four original CLI scripts byte-identical to source |
-| JSON / YAML and repository structure | Validated locally |
-| Credentials and PII review | See SECURITY_REVIEW.md |
-| Official hassfest | Not run locally: Docker/action runtime unavailable |
-| Official HACS validation | Not run locally: Docker unavailable and remote repository not published |
+| Full offline suite, cryptography 50.0.1 | 122 passed |
+| Full offline suite, cryptography 48.0.1 from separate target | 122 passed |
+| New automatic-session tests | 31 passed (included in both full runs) |
+| Python syntax and repository JSON | Validated locally |
+| Git diff whitespace | Passed |
+| Release ZIP integrity, version and source comparison | Passed |
+| Official hassfest / HACS workflows | Not run locally; pending GitHub execution |
+| Live cloud / kettle validation | Not performed for v0.1.2 |
 
-The test environment uses Python 3.14.4 and installed Home Assistant 2026.10.2
-classes. cryptography 48.0.1 was loaded from a separate target directory; the
-base HA package declares 50.0.1. The 48.0.1 run proves these integration tests work
-with that library, not that the entire HA dependency set supports an override.
-The integration manifest has requirements=[], so it does not replace HA's library.
+Run from the repository root:
 
-All tests use mock API transports. No real login, kettle command or running HA
-configuration was used. The publication test suite changes fixture paths only:
-two tests use tests/fixtures/kettle_capabilities.json, and the CLI dry-run test
-passes that fixture explicitly. No private reports are required or distributed.
+```sh
+python -m unittest discover -s tests -v
+python tools/build_zip.py
+git diff --check
+```
 
-Official validation actions are configured for the future repository. Their status
-is pending, not passed. The separate Premium Card now has its supplied JS and its own validation report.
-Screenshots from a real installation have not been supplied.
+`tests/test_session_refresh.py` covers:
+
+- All session fields and seconds-based TTL conversion; malformed TTL rejection.
+- Refresh envelope with no expired IoT token; rotation and omitted-token retention.
+- Proactive timer scheduling for multiple TTLs, independent of polling interval.
+- Expired IoT token, persisted deadlines and token recovery after a restart.
+- Network loss, business/HTTP server failures, bounded backoff and cooldown.
+- Refresh expiry/rejection and standard HA reauthentication.
+- Thirty simultaneous refresh requests, concurrent rejected-token requests,
+  and cancellation of a waiter during rotation.
+- Read retries and recovery after a rejected IoT token.
+- Entry schema migration, one-time legacy reauthentication and startup retry.
+- Credential-free diagnostics/logs and disabled-by-default diagnostic sensors.
+- No entry reload after token persistence; options changes still reload.
+- No heating command replay after authentication failure; no command sent while
+  refresh is unavailable; unload cancels the timer and clears in-memory secrets.
+
+The existing 91 tests also pass. Their synthetic login session fixture now
+includes the TTLs and identity ID required by the API contract. HA mocks include
+session data, and config flow assertions verify refresh credential persistence.
+Control policy, live TSL validation, command payloads and allowed ranges remain
+covered by the original tests. No real API connection was used: tests mock
+transports and install socket connection guards.
+
+The 48.0.1 run validates these integration tests with that library, not an override
+of HA's complete dependency set. The manifest has `requirements=[]`.
+
+The clean release artifact is `dist/aigosmart-ha-0.1.2.zip`. It contains integration
+files, public documentation and licensing only, without local HA configuration,
+credentials, private reports, tests or Python caches. Official GitHub validators
+and live hardware behavior remain unverified; no push or release was performed.

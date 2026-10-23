@@ -1,6 +1,7 @@
 """Offline integration checks against installed Home Assistant classes."""
 import asyncio
 import json
+import time
 from pathlib import Path
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
@@ -90,6 +91,11 @@ class HATests(unittest.IsolatedAsyncioTestCase):
             return target(*args)
         self.hass.async_add_executor_job = executor
         self.client = Mock()
+        self.client.token = 'fake-token'
+        self.client.session = {'iot_token': 'fake-token', 'refresh_token': 'fake-refresh',
+            'identity_id': 'fake-identity', 'iot_token_ttl': 7200,
+            'iot_token_expires_at': time.time() + 7200,
+            'refresh_token_expires_at': time.time() + 86400}
         self.client.devices.return_value = [{'iotId':'fake','status':1}]
         self.client.properties.return_value = {'Target_temperature':{'value':80}, 'Mode':{'value':1},'HeatingSwitch':{'value':0}}
         self.entry = Mock(data={'device_id':'fake'},options={},entry_id='fake')
@@ -99,6 +105,7 @@ class HATests(unittest.IsolatedAsyncioTestCase):
         self.c.async_set_updated_data(self.client.properties.return_value)
 
     async def asyncTearDown(self):
+        await self.c.session.close()
         await self.c.async_shutdown()
         await self.hass.async_stop(force=True)
 
@@ -111,6 +118,7 @@ class HATests(unittest.IsolatedAsyncioTestCase):
     async def test_auth_error(self):
         from homeassistant.exceptions import ConfigEntryAuthFailed
         self.client.devices.side_effect=APIError('Expired',status=401)
+        self.client.refresh_iot_token_sync.side_effect=APIError('Rejected',status=401)
         with self.assertRaises(ConfigEntryAuthFailed): await self.c._async_update_data()
 
     async def test_entities(self):
@@ -170,7 +178,8 @@ class HATests(unittest.IsolatedAsyncioTestCase):
         from custom_components.aigosmart.config_flow import AigoFlow
         flow=AigoFlow();flow.hass=self.hass
         flow.context={'source':'reauth'}
-        flow.client=Mock();flow.client.devices.return_value=[{'iotId':'fake'}]
+        flow.client=Mock();flow.client.session={'refresh_token':'rotated', 'identity_id':'identity',
+            'iot_token_expires_at': 2000000000, 'refresh_token_expires_at': 2000086400};flow.client.devices.return_value=[{'iotId':'fake'}]
         flow.credentials={'email':'a@example.test','password':'new'}
         entry=Mock(data={'email':'a@example.test','device_id':'fake'})
         flow._get_reauth_entry=Mock(return_value=entry)
@@ -178,13 +187,15 @@ class HATests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await flow._login())['type'],'abort')
         flow.async_update_reload_and_abort.assert_called_once()
         self.assertNotIn('password', flow.async_update_reload_and_abort.call_args.kwargs['data_updates'])
+        self.assertEqual(flow.async_update_reload_and_abort.call_args.kwargs['data_updates']['refresh_token'], 'rotated')
         flow.credentials={'email':'a@example.test','password':'new'}
         flow.credentials['email']='other@example.test'
         self.assertEqual((await flow._login())['reason'],'wrong_account')
 
     async def test_successful_login_does_not_store_password(self):
         from custom_components.aigosmart.config_flow import AigoFlow
-        flow=AigoFlow();flow.hass=self.hass;flow.client=Mock()
+        flow=AigoFlow();flow.hass=self.hass;flow.client=Mock();flow.client.session={'refresh_token':'rotated',
+            'identity_id':'identity', 'iot_token_expires_at':2000000000, 'refresh_token_expires_at':2000086400}
         flow.client.devices.return_value=[{'iotId':'fake'}]
         flow.client.token='fake-token'
         result=await flow.async_step_user({'email':'a@example.test','password':'secret'})
@@ -193,6 +204,8 @@ class HATests(unittest.IsolatedAsyncioTestCase):
         result=await flow.async_step_device({'device':'0'})
         self.assertNotIn('password',result['data'])
         self.assertEqual(result['data']['iot_token'],'fake-token')
+        self.assertEqual(result['data']['refresh_token'], 'rotated')
+        self.assertEqual(result['data']['refresh_token_expires_at'], 2000086400)
         flow.client.login_with_code.assert_called_once()
 
     async def test_polling_reuses_session(self):
@@ -263,6 +276,7 @@ class HATests(unittest.IsolatedAsyncioTestCase):
             self.client.login_with_code.assert_not_called()
             self.assertIn('switch', self.hass.config_entries.async_forward_entry_setups.call_args.args[1])
         finally:
+            await self.entry.runtime_data.session.close()
             await self.entry.runtime_data.async_shutdown()
 
     async def test_heating_confirmed_and_unconfirmed(self):
