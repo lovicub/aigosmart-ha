@@ -51,4 +51,4 @@ class AigoClient(p.Client):
 def is_auth_error(exc):
     return isinstance(exc, p.NeedSecurityCodeError) or (
         isinstance(exc, p.APIError) and (exc.status in (401, 403) or exc.code in {
-            '401', '403', 'invalid_grant', 'access_denied', 'invalid_client'}))
+            '401', '403', '2062', '100001', '100003', '100004', '100005', 'invalid_grant', 'access_denied', 'invalid_client'}))

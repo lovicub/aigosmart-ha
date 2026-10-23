@@ -6,25 +6,52 @@ async def async_setup_entry(hass, entry):
     from .coordinator import AigoCoordinator
     client = AigoClient()
     try:
-        client.token = entry.data['iot_token']
+        client.restore_session(entry.data)
         coordinator = AigoCoordinator(hass, entry, client)
-        coordinator.model = await hass.async_add_executor_job(client.model, coordinator.device)
-    except Exception as exc:
+        coordinator.session.require_credentials()
+        coordinator.model = await coordinator.session.read(client.model, coordinator.device)
+    except BaseException as exc:
+        if 'coordinator' in locals():
+            await coordinator.session.close()
+        if not isinstance(exc, Exception) or isinstance(exc, ConfigEntryAuthFailed):
+            raise
         if is_auth_error(exc):
             raise ConfigEntryAuthFailed('Authentication required') from None
         raise ConfigEntryNotReady('API unavailable') from None
-    await coordinator.async_config_entry_first_refresh()
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except BaseException:
+        await coordinator.session.close()
+        raise
+    coordinator.session.schedule()
+    coordinator._entry_options = dict(entry.options)
     entry.runtime_data = coordinator
     entry.async_on_unload(entry.add_update_listener(_reload))
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    try:
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    except BaseException:
+        await coordinator.session.close()
+        raise
     return True
 
 async def _reload(hass, entry):
-    await hass.config_entries.async_reload(entry.entry_id)
+    if dict(entry.options) != entry.runtime_data._entry_options:
+        await hass.config_entries.async_reload(entry.entry_id)
 
 async def async_unload_entry(hass, entry):
     from .const import PLATFORMS
     result = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if result:
+        await entry.runtime_data.session.close()
         entry.runtime_data.client.token = None
+        entry.runtime_data.client.session.clear()
     return result
+
+
+async def async_migrate_entry(hass, entry):
+    """Keep legacy device/options; setup requests one-time reauth for missing fields."""
+    if entry.version > 2:
+        return False
+    if entry.version == 1:
+        hass.config_entries.async_update_entry(entry, version=2)
+    return True

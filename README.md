@@ -1,7 +1,7 @@
 # AigoSmart HA
 
 Native Home Assistant integration for AigoSmart kettles using the AigoSmart /
-Alibaba IoT cloud API. Version **0.1.1**, development status.
+Alibaba IoT cloud API. Version **0.1.2**, development status.
 
 Optional dashboard companion: [AigoSmart Premium Card](https://github.com/lovicub/aigosmart-premium-card).
 The integration works independently; the card has its own installation and configuration.
@@ -9,6 +9,8 @@ The integration works independently; the card has its own installation and confi
 ## Features
 
 - UI account setup with email security-code verification and reauthentication.
+- Automatic session refresh using API TTLs, with persisted rotating refresh tokens.
+- Three optional diagnostic sensors, disabled by default.
 - Heating ON/OFF using the `HeatingSwitch` switch.
 - Target temperature: 0–100 °C using a number entity.
 - Operating mode selection: 0, 1 or 2, with TSL labels in `mode_labels`.
@@ -73,11 +75,36 @@ For updates, replace the complete `aigosmart` directory and restart HA.
    or device identifiers. Add each kettle separately.
 5. Use **Configure** on the integration entry to change the polling interval.
 
-Home Assistant stores the email and IoT session token in the config entry. The
-password and verification code are held in the setup flow, not persisted in the
-entry. Protect your HA configuration and backups; `.storage` is not an encrypted
-credential vault. This client reuses the session between polls but does not refresh
-it automatically; an authentication failure requires reauthentication in HA.
+Home Assistant stores the email, IoT token, refresh token, identity ID, API TTLs and
+absolute expiry times in the config entry. Passwords and verification codes stay
+in the setup flow. Protect your HA configuration and backups: `.storage` is not
+an encrypted credential vault. Tokens and identity IDs are excluded from the
+integration's diagnostic export and logs.
+
+Sessions refresh before expiry, with a margin of 10 minutes for TTLs of at least
+100 minutes, or 10% of the API TTL for shorter sessions. An independent timer
+works even with a long polling interval. After a restart, the saved absolute
+expiry times are reused; an expired IoT token is refreshed before startup reads.
+A returned refresh token replaces the previous one. If omitted, the previous
+token and its deadline are retained unless the API supplies a new TTL.
+
+Network/server failures get at most three attempts with 1 and 3 second backoff
+for reads and refresh only. Failed refresh rounds wait at least 60 seconds before
+the next round. HA retries an unavailable startup automatically. No heating or
+other control command is ever replayed. A rejected/expired refresh credential
+starts HA's standard reauthentication flow; a temporary outage does not.
+
+**Upgrading from v0.1.1:** entries migrate to schema version 2 without changing
+the selected device or options. Because older entries lack refresh credentials,
+HA will request a one-time login (and an email code if required). Use the existing
+integration's **Reconfigure / Reauthenticate** prompt; do not delete the entry.
+
+Optional sensors are listed under the device's disabled entities: **Session time
+remaining** (seconds), **Last successful refresh** (timestamp), and **Authorization
+status** (`authorized`, `refresh_unavailable`, `reauth_required`). Enable them in
+the entity registry if needed. The countdown updates on coordinator notifications;
+it is not a per-second clock. No credential is exposed as an entity attribute.
+
 No cryptography version is pinned by the integration: it uses HA's installed library.
 The root `requirements.txt` is for the optional standalone scripts only.
 
