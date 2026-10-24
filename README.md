@@ -1,7 +1,7 @@
 # AigoSmart HA
 
 Native Home Assistant integration for AigoSmart kettles using the AigoSmart /
-Alibaba IoT cloud API. Version **0.1.2**, development status.
+Alibaba IoT cloud API. Version **0.1.4-beta.2**, opt-in beta based on stable **v0.1.3**.
 
 Optional dashboard companion: [AigoSmart Premium Card](https://github.com/lovicub/aigosmart-premium-card).
 The integration works independently; the card has its own installation and configuration.
@@ -11,7 +11,7 @@ The integration works independently; the card has its own installation and confi
 
 - UI account setup with email security-code verification and reauthentication.
 - Automatic session refresh using API TTLs, with persisted rotating refresh tokens.
-- Three optional diagnostic sensors, disabled by default.
+- Passive connection/session diagnostics, disabled by default.
 - Heating ON/OFF using the `HeatingSwitch` switch.
 - Target temperature: 0–100 °C using a number entity.
 - Operating mode selection: 0, 1 or 2, with TSL labels in `mode_labels`.
@@ -194,7 +194,7 @@ reauthentication flow automatically. Long-term live recovery has not yet been
 verified. Never remove the integration to renew its credentials.
 
 
-### Optional diagnostics beta: v0.1.4-beta.1
+### Optional diagnostics + enum beta: v0.1.4-beta.2
 
 The `beta/diagnostics-v014` branch adds passive diagnostic sensors and safe
 structured downloads. It is an opt-in pre-release; stable v0.1.3 remains current.
@@ -203,7 +203,7 @@ entities remain disabled by default and add no cloud requests or per-second
 polling. New runtime counters/history reset on reload/restart.
 
 To install with HACS 2.x, open **HACS → AigoSmart HA → ⋮ → Redownload → Need a
-different version? → Release**, select **v0.1.4-beta.1**, then **Download** and
+different version? → Release**, select **v0.1.4-beta.2**, then **Download** and
 restart Home Assistant. If it is absent, use **⋮ → Update information** first.
 Older HACS versions may require **Show beta versions**. Do not remove/re-add the
 integration. Select **v0.1.3** through the same menu to return to stable.
@@ -212,3 +212,52 @@ Enable selected diagnostic entities under **Settings → Devices & services →
 Entities** (include disabled entities), or download diagnostics from the AigoSmart
 integration entry menu. See [diagnostic definitions and beta limits](docs/BETA_DIAGNOSTICS.md).
 Long-term live operation of this beta has not been validated.
+
+
+### Enum labels and stable automation values (issue #3)
+
+Existing `ModeSelect` and `status` sensor unique IDs, entity IDs and raw values
+are unchanged. Mode services still take the current numeric-string options
+(`"0"`, `"1"`, `"2"` on the tested model), never a human label. Existing numeric
+status triggers keep working. The select retains `mode_labels` and adds
+`current_mode_label`; the existing status sensor adds `status_labels` and
+`status_label` attributes. New **Mode description** and **Status description**
+sensors show readable device-provided TSL descriptions, without extra polling.
+Their entity names are translated in English, German and Polish; their values
+use the device's own TSL language.
+
+| Property | Raw value | Tested kettle meaning |
+| --- | --- | --- |
+| Mode | 0 | One-click boil |
+| Mode | 1 | Boil and keep warm |
+| Mode | 2 | Heating and keep warm |
+| status | 1 | Standby (the available TSL fixture says `Stand by`) |
+| status | 2 | Heating |
+| status | 3 | Cooling |
+| status | 4 | Keeping warm |
+
+These mappings are confirmed by the issue report and represented in our existing
+**synthetic** TSL fixture; no live API was queried for this release. Runtime TSL
+descriptions take precedence. Other models can expose different labels/values.
+Missing or unknown numeric values are described as `Unknown (value)` rather than
+assigned a guessed meaning; unavailable/non-enum values have no description.
+Unsafe or overlong TSL descriptions are discarded.
+
+Native HA select translations were evaluated: they use static state keys and
+static translations, whereas this select uses model-specific numeric options.
+Changing those options to semantic keys would break existing service calls, and
+static numeric translations could mislabel other models. We therefore preserve
+all raw options and supply dynamic attributes plus separate readable sensors.
+See [HA select translations](https://contributors.home-assistant.io/core/entities/select/).
+
+Premium Card **v0.1.1-beta.1** supports integration **v0.1.3**, diagnostics beta.1
+and this beta.2. Keep existing card entity mappings pointing to the original raw
+status sensor and Mode select. Additional description sensors are optional; the
+updated card ignores diagnostic/description sensors during automatic detection.
+Install either beta independently; neither requires removing an integration or
+changing dashboards. Numeric and labeled select options are supported by the
+updated card, which always sends an option actually offered by HA.
+
+Stable main and v0.1.3 remain unchanged. Token refresh, rotation, recovery,
+reconfiguration/reauthentication and write non-replay remain present. No config
+migration is required; long-term live operation remains unverified.

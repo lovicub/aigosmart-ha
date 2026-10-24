@@ -1,4 +1,60 @@
-# Validation results — v0.1.4-beta.1
+# Validation results — v0.1.4-beta.2
+
+Date: 2026-10-24. Python 3.14.4, Home Assistant 2026.10.2.
+Branch: `beta/diagnostics-v014`; stable base:
+`87a6ebe74d04eb94144976ce191b4af97fb55ae2` (v0.1.3).
+Existing beta.1 commit `9f795f4f13f8e109c236249969cd8b66e4d0fa36` is retained as
+an ancestor, with its tag/release unchanged. Beta.2 is not merged into main.
+
+| Check | Result |
+| --- | --- |
+| Full offline suite / cryptography 50.0.1 | 158 passed |
+| Full offline suite / cryptography 48.0.1 isolated import target | 158 passed |
+| Enum regressions | 8 passed, included above |
+| Existing recovery/diagnostic regressions | All 150 beta.1 tests retained |
+| Syntax, JSON, translation consistency, whitespace, secret-pattern review | Passed locally |
+| Release ZIP integrity/source comparison | Passed locally |
+| GitHub Python matrix, HACS and hassfest | Required green on the exact beta commit before publication; see Actions |
+| Live API / installed HA frontend / kettle | Not exercised |
+
+## Stable-feature proof and compatibility
+
+`git merge-base --is-ancestor origin/main HEAD` confirms this beta includes the
+latest stable main. The following files are byte-identical to v0.1.3:
+`__init__.py`, `config_flow.py`, `api.py`, `protocol.py`, `entity.py`, `number.py`,
+`switch.py` and `binary_sensor.py`. Thus setup/reauth/reconfigure, token parsing
+and rotation, write validation and existing unique-ID construction are retained.
+`session.py` and `coordinator.py` remain byte-identical to beta.1: their difference
+from v0.1.3 is passive diagnostic instrumentation, covered by the full suite.
+No entry schema/version migration or control-service contract changes occur.
+
+Existing ModeSelect states/options and AigoSensor status values remain raw and
+unchanged. New attributes and description sensors read existing TSL/coordinator
+state only. Tests cover every documented mode/status as integers and strings,
+TSL precedence on a different model, unknown/unavailable/unsafe values and real
+HA registry identity/name/area preservation. Additional sensor names translate;
+TSL descriptions remain in the language returned by the device. Static native
+select-state translation was evaluated and avoided to preserve numeric options
+and prevent model-independent numeric assumptions.
+
+Mappings were supplied in issue #3 and exist in the synthetic capability fixture.
+No new live TSL/API capture was made. Existing diagnostics and their privacy,
+refresh/recovery/no-extra-polling behavior are unchanged from beta.1.
+
+Companion Premium Card v0.1.1-beta.1 tests cover integration v0.1.3 and beta
+attribute shapes, numeric and labeled states/options, every known value,
+unknown/malformed values, live-label precedence, supported-option service calls,
+options-only updates, safe error logging and command non-replay. See that
+repository's VALIDATION.md for JS test counts and limitations.
+
+Local full logs: `/tmp/aigo-v014b2-tests-50.log` and
+`/tmp/aigo-v014b2-tests-48.log`. Build: `python tools/build_zip.py`.
+Main, stable v0.1.3 and published beta.1 must remain unchanged. The new beta uses
+`--prerelease --latest=false`. Issue #3 is not automatically closed.
+
+---
+
+# v0.1.4-beta.1 validation — historical baseline
 
 Date: 2026-10-24. Python 3.14.4, Home Assistant 2026.10.2.
 Branch: `beta/diagnostics-v014`, based on stable main/v0.1.3 commit

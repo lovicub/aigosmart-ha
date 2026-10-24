@@ -1,6 +1,7 @@
 from homeassistant.components.select import SelectEntity
 from homeassistant.exceptions import HomeAssistantError
 from .entity import AigoEntity
+from .enum_labels import enum_label
 
 async def async_setup_entry(hass, entry, async_add_entities):
     c = entry.runtime_data
@@ -22,7 +23,8 @@ class ModeSelect(AigoEntity, SelectEntity):
 
     @property
     def extra_state_attributes(self):
-        return {**super().extra_state_attributes, 'mode_labels': self.choices}
+        return {**super().extra_state_attributes, 'mode_labels': self.choices,
+                'current_mode_label': enum_label(self.coordinator.model, 'Mode', self.value)}
 
     async def async_select_option(self, option):
         if option not in self.choices:

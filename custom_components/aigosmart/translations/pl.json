@@ -50,5 +50,15 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "mode_description": {
+        "name": "Opis trybu"
+      },
+      "status_description": {
+        "name": "Opis stanu"
+      }
+    }
   }
 }

@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.4-beta.2 — 2026-10-24 — DIAGNOSTICS + ENUM LABELS BETA
+
+- Reuse beta.1 diagnostics and every stable v0.1.3 feature/fix; no main merge or
+  tag overwrite. Keep existing numeric states, Mode select options and IDs.
+- Address the display request in issue #3 with TSL-derived current Mode/status
+  label attributes and additional Mode/Status description sensors. Runtime TSL
+  takes precedence over tested-model examples; unknown values are not guessed.
+- Translate the new sensor names in English/German/Polish. Leave select machine
+  keys unchanged: static native select translations cannot safely represent
+  arbitrary model-specific descriptions without changing the stable contract.
+- Document raw mappings, synthetic fixture limits and compatibility with Premium
+  Card v0.1.1-beta.1 and stable integration v0.1.3.
+- Add all-known-value, other-model, unknown/unsafe-label and registry-preservation
+  tests. Retain all recovery, privacy and single-attempt command regressions.
+
+Long-term live operation and the installed frontend have not been validated.
+Issue #3 remains open pending real Home Assistant verification.
+
 ## 0.1.4-beta.1 — 2026-10-24 — DIAGNOSTICS BETA
 
 This opt-in beta is released only from `beta/diagnostics-v014`. Stable `main`
