@@ -59,6 +59,15 @@
       "status_description": {
         "name": "Status description"
       }
+    },
+    "select": {
+      "mode": {
+        "state": {
+          "0": "One-click boil",
+          "1": "Boil and keep warm",
+          "2": "Heating and keep warm"
+        }
+      }
     }
   }
 }

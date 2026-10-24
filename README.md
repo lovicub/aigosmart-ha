@@ -1,7 +1,7 @@
 # AigoSmart HA
 
 Native Home Assistant integration for AigoSmart kettles using the AigoSmart /
-Alibaba IoT cloud API. Version **0.1.4-beta.2**, opt-in beta based on stable **v0.1.3**.
+Alibaba IoT cloud API. Version **0.1.4-beta.3**, opt-in beta based on stable **v0.1.3**.
 
 Optional dashboard companion: [AigoSmart Premium Card](https://github.com/lovicub/aigosmart-premium-card).
 The integration works independently; the card has its own installation and configuration.
@@ -194,7 +194,7 @@ reauthentication flow automatically. Long-term live recovery has not yet been
 verified. Never remove the integration to renew its credentials.
 
 
-### Optional diagnostics + enum beta: v0.1.4-beta.2
+### Optional diagnostics + enum beta: v0.1.4-beta.3
 
 The `beta/diagnostics-v014` branch adds passive diagnostic sensors and safe
 structured downloads. It is an opt-in pre-release; stable v0.1.3 remains current.
@@ -203,7 +203,7 @@ entities remain disabled by default and add no cloud requests or per-second
 polling. New runtime counters/history reset on reload/restart.
 
 To install with HACS 2.x, open **HACS → AigoSmart HA → ⋮ → Redownload → Need a
-different version? → Release**, select **v0.1.4-beta.2**, then **Download** and
+different version? → Release**, select **v0.1.4-beta.3**, then **Download** and
 restart Home Assistant. If it is absent, use **⋮ → Update information** first.
 Older HACS versions may require **Show beta versions**. Do not remove/re-add the
 integration. Select **v0.1.3** through the same menu to return to stable.
@@ -243,12 +243,34 @@ Missing or unknown numeric values are described as `Unknown (value)` rather than
 assigned a guessed meaning; unavailable/non-enum values have no description.
 Unsafe or overlong TSL descriptions are discarded.
 
-Native HA select translations were evaluated: they use static state keys and
-static translations, whereas this select uses model-specific numeric options.
-Changing those options to semantic keys would break existing service calls, and
-static numeric translations could mislabel other models. We therefore preserve
-all raw options and supply dynamic attributes plus separate readable sensors.
-See [HA select translations](https://contributors.home-assistant.io/core/entities/select/).
+Native Mode dropdown translations are supported in **HA Core 2026.10.3** with
+its pinned frontend **20260930.5**, including numeric keys. For the complete
+runtime TSL mapping above, the existing select sets `translation_key: mode` and
+HA displays the translated labels directly. English displays **One-click boil**,
+**Boil and keep warm**, **Heating and keep warm**; German and Polish translations
+are also provided. Stored states, `attributes.options`, automation arguments and
+IoT values remain `"0"`/`"1"`/`"2"` (IoT integers).
+
+The opt-in gate requires exactly those three keys and matching English TSL
+meanings (case/spacing and the hyphen in One-click may vary). Missing metadata,
+other meanings, partial mappings or additional values disable the fixed
+translations. Existing device label attributes and description sensors remain
+unchanged and continue to describe other models. This conservative gate may
+leave numeric dropdown labels on otherwise equivalent models with TSL labels in
+another language; it avoids assigning an unverified meaning.
+
+Numeric key support was confirmed using Core's real translation loader, actual
+registry updates and the unmodified production native select/formatter in a
+headless browser. English/German/Polish menus visibly render translated labels;
+clicks send numeric-string service options. An unmatched-model case falls back
+to raw options. These are isolated fixture tests, not installed-HA verification.
+[Screenshot: English native dropdown](docs/screenshots/native-mode-en.png) ·
+[Screenshot: German native dropdown](docs/screenshots/native-mode-de.png).
+
+After HACS installs beta.3, restart HA and refresh the browser/app so it reloads
+registry metadata and translations. Keep the existing entity; do not delete or
+recreate it. If the dropdown remains numeric, inspect `mode_labels`: unmatched
+runtime descriptions deliberately do not enable fixed translations.
 
 Premium Card **v0.1.1-beta.1** supports integration **v0.1.3**, diagnostics beta.1
 and this beta.2. Keep existing card entity mappings pointing to the original raw

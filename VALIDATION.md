@@ -1,4 +1,78 @@
-# Validation results — v0.1.4-beta.2
+# Validation results — v0.1.4-beta.3
+
+Date: 2026-10-24. Branch: `beta/diagnostics-v014`.
+Core **2026.10.3**, its pinned frontend **20260930.5**, Python 3.14.4.
+Based on beta.2 commit `2af75f14988b3569e11532c5e32e3aeb948b5401`.
+Stable main/v0.1.3 remains `87a6ebe74d04eb94144976ce191b4af97fb55ae2`.
+
+| Check | Result |
+| --- | --- |
+| Full offline suite / cryptography 50.0.1 | 164 passed |
+| Full offline suite / cryptography 48.0.1 isolated target | 164 passed |
+| New backend translation/TSL-gate/registry regressions | 6 passed, included above |
+| Production native select + formatter in Chromium 156.0.8078.4 | 4 cases passed; 13 mock selections |
+| Core translation loader / cached state translation | Numeric keys verified in English/German/Polish |
+| Syntax/JSON/translation consistency/whitespace/secret-pattern review | Passed locally |
+| ZIP integrity and source comparison | Passed locally |
+| GitHub Python matrix, HACS, hassfest and native frontend job | Required green on the exact beta commit before publication |
+| Installed HA instance / live kettle writes | Not exercised |
+
+## Frontend evidence and its limits
+
+`tools/test_native_mode_frontend.py` uses the exact production frontend wheel
+pinned by Core 2026.10.3, not a copied approximation of HA's formatter. It loads
+the actual `state-card-select` native control and `computeStateDisplay`, supplies
+resources from Core's real translation loader and translation-key metadata from
+this integration's ModeSelect, then opens and clicks the rendered native menu.
+English/German/Polish all show readable labels with underlying values `0/1/2`.
+An unmatched TSL model has no translation key and displays raw `0/1/2/9`.
+Every recorded mock service uses the raw numeric-string option, never the label.
+Safe English/German screenshots are under `docs/screenshots/native-mode-*.png`;
+CI uploads all four screenshots plus structured results as an artifact.
+
+The fixture exposes the production bundle loader by skipping application bootstrap;
+the select component, formatter and dropdown rendering logic are unmodified.
+Registry metadata is supplied to the browser; separate backend tests exercise
+actual registry update-in-place and clearing the translation key for other models.
+All browser requests are intercepted fixtures and all services are recorded mocks.
+This is real browser rendering evidence, not a full authenticated HA application
+or the user's installed frontend. Theme/device/browser differences, cache refresh
+and the actual runtime TSL still require user verification. No live API/IoT
+operation, account data or existing HA config is used.
+
+## Compatibility and TSL gate
+
+The complete runtime mapping must be 0=One-click boil, 1=Boil and keep warm,
+2=Heating and keep warm; case/spacing and the One-click hyphen may vary. Missing,
+conflicting, partial, extra-value or localized-unrecognized mappings do not opt in.
+Original select states/options, ID, unique ID, name/area and existing label
+attributes remain; writes still convert supported raw options to original IoT
+integers. Raw numeric-string automation arguments remain valid. Sensor, enum
+helper, diagnostic, recovery, protocol, setup and other control code is unchanged
+from beta.2. Premium Card is untouched. No schema migration or config removal.
+
+## Reproduction
+
+```sh
+python -m pip install homeassistant==2026.10.3
+python -m unittest discover -s tests -v
+# Repeat with cryptography 48.0.1 and 50.0.1 (CI uses isolated import targets).
+python -m pip install home-assistant-frontend==20260930.5 playwright
+python -m playwright install --with-deps chromium --only-shell
+python tools/test_native_mode_frontend.py --output /tmp/aigosmart-native-mode
+python tools/build_zip.py
+git diff --check
+```
+
+Local test installations are isolated in a task cache, not the user's HA instance.
+Full logs: `/tmp/aigo-v014b3-tests-50.log`, `/tmp/aigo-v014b3-tests-48.log`,
+`/tmp/aigo-v014b3-frontend.log`. Release ZIP: `dist/aigosmart-ha-0.1.4-beta.3.zip`.
+GitHub publication must use `--prerelease --latest=false` after all checks pass.
+No merge to main, existing tag overwrite, stable release or issue #3 closure.
+
+---
+
+# v0.1.4-beta.2 validation — historical baseline
 
 Date: 2026-10-24. Python 3.14.4, Home Assistant 2026.10.2.
 Branch: `beta/diagnostics-v014`; stable base:

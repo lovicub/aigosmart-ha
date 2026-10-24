@@ -1,7 +1,26 @@
 from homeassistant.components.select import SelectEntity
 from homeassistant.exceptions import HomeAssistantError
 from .entity import AigoEntity
-from .enum_labels import enum_label
+from .enum_labels import enum_label, enum_labels
+
+
+_TRANSLATED_MODE_LABELS = {
+    '0': 'one click boil',
+    '1': 'boil and keep warm',
+    '2': 'heating and keep warm',
+}
+
+
+def has_known_mode_labels(model, choices):
+    """Opt in only for the complete runtime TSL mapping we can translate safely."""
+    labels = enum_labels(model, 'Mode')
+    if set(choices) != set(_TRANSLATED_MODE_LABELS) or set(labels) != set(choices):
+        return False
+    return all(
+        " ".join(labels[key].strip().casefold().replace('-', ' ').split()) == expected
+        and labels[key] == choices[key]
+        for key, expected in _TRANSLATED_MODE_LABELS.items()
+    )
 
 async def async_setup_entry(hass, entry, async_add_entities):
     c = entry.runtime_data
@@ -14,7 +33,10 @@ class ModeSelect(AigoEntity, SelectEntity):
     def __init__(self, coordinator, choices):
         super().__init__(coordinator, 'Mode')
         self.choices = {str(k): str(v) for k,v in choices.items()}
-        self._attr_options = list(self.choices)  # Stable TSL values; labels are attributes.
+        self._attr_options = list(self.choices)  # Stored/service/API values stay numeric strings.
+        self._attr_translation_key = (
+            'mode' if has_known_mode_labels(coordinator.model, self.choices) else None
+        )
 
     @property
     def current_option(self):

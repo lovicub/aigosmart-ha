@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.4-beta.3 — 2026-10-24 — NATIVE MODE DROPDOWN LABELS
+
+- Enable native HA select option translations via `translation_key: mode` and
+  `entity.select.mode.state` with raw keys `0`, `1`, `2`.
+- Correct beta.2's overly broad assumption about numeric translation keys:
+  Core 2026.10.3 and its pinned frontend 20260930.5 support these keys. Actual
+  production-control browser tests confirm rendered labels and numeric services.
+- Supply consistent English/German/Polish state translations. Opt in only when
+  the complete runtime TSL mapping agrees with the tested meanings; other models
+  retain their raw dropdown values and original dynamic description attributes.
+- Preserve select ID/unique ID, numeric states/options and integer IoT writes,
+  `mode_labels`, `current_mode_label`, status and description sensor states.
+- Preserve all v0.1.3 recovery/control behavior and beta diagnostics. No Premium
+  Card change, schema migration, automatic write retry or extra cloud request.
+- Run regressions on HA 2026.10.3 and add native browser evidence in CI, beyond
+  HACS/hassfest validation. Include safe fixture screenshots in the documentation.
+
+Only the beta branch is published as a pre-release. Stable main and existing
+releases remain unchanged; issue #3 stays open for installed-HA verification.
+
 ## 0.1.4-beta.2 — 2026-10-24 — DIAGNOSTICS + ENUM LABELS BETA
 
 - Reuse beta.1 diagnostics and every stable v0.1.3 feature/fix; no main merge or

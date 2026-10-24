@@ -59,6 +59,15 @@
       "status_description": {
         "name": "Opis stanu"
       }
+    },
+    "select": {
+      "mode": {
+        "state": {
+          "0": "Gotowanie jednym przyciskiem",
+          "1": "Gotowanie i podtrzymywanie ciepła",
+          "2": "Podgrzewanie i podtrzymywanie ciepła"
+        }
+      }
     }
   }
 }

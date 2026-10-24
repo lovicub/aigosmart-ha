@@ -10,6 +10,7 @@ with ZipFile(output, 'w', ZIP_DEFLATED) as archive:
     for path in sorted((root / 'custom_components/aigosmart').rglob('*')):
         if path.is_file() and path.suffix in {'.py', '.json', '.png'} and '__pycache__' not in path.parts:
             archive.write(path, path.relative_to(root))
-    for name in ('README.md', 'CHANGELOG.md', 'VALIDATION.md', 'hacs.json', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'docs/BETA_DIAGNOSTICS.md'):
+    for name in ('README.md', 'CHANGELOG.md', 'VALIDATION.md', 'hacs.json', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'docs/BETA_DIAGNOSTICS.md',
+                 'docs/screenshots/native-mode-en.png', 'docs/screenshots/native-mode-de.png'):
         archive.write(root / name, name)
 print(output)
