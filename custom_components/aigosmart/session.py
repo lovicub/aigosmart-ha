@@ -8,6 +8,7 @@ from homeassistant.helpers.event import async_track_point_in_utc_time
 
 from .api import is_auth_error
 from .protocol import APIError
+from .recovery import RecoveryError, failure
 
 
 def transient(exc):
@@ -52,7 +53,7 @@ class SessionManager:
         if rejected_token is None and time.time() < self.refresh_at:
             return
         if time.time() < self._retry_at:
-            raise APIError('Session renewal temporarily unavailable')
+            raise RecoveryError('token_refresh', 'cloud_unavailable')
         self._task = self.hass.async_create_task(self._refresh())
         self._task.add_done_callback(self._refresh_done)
         # A cancelled waiter must not cancel an in-flight rotating refresh.
@@ -79,21 +80,23 @@ class SessionManager:
                     self.status = 'authorized'
                     return
                 except Exception as exc:
+                    reason = failure('token_refresh', exc)
                     if is_auth_error(exc):
                         self.status = 'reauth_required'
                         raise ConfigEntryAuthFailed('Session renewal rejected; reauthenticate') from None
                     if not transient(exc) or attempt == 2:
                         self.status = 'refresh_unavailable'
                         self._retry_at = time.time() + 60
-                        raise APIError('Session renewal temporarily unavailable') from None
+                        raise RecoveryError('token_refresh', reason) from None
         finally:
             self.on_change()
             self.schedule()
 
-    async def read(self, method, *args):
+    async def read(self, method, *args, stage="property_read"):
         await self.ensure()
         refreshed = False
-        for attempt in range(3):
+        attempt = 0
+        while attempt < 3:
             token = self.client.token
             try:
                 return await self.hass.async_add_executor_job(method, *args)
@@ -101,11 +104,18 @@ class SessionManager:
                 if is_auth_error(exc) and not refreshed:
                     await self.ensure(rejected_token=token)
                     refreshed = True
+                elif is_auth_error(exc):
+                    failure(stage, exc)
+                    self.status = 'reauth_required'
+                    self.on_change()
+                    self.schedule()
+                    raise ConfigEntryAuthFailed('Confirmed invalid credentials after token refresh') from None
                 elif not transient(exc) or attempt == 2:
-                    # Only refresh credential rejection should initiate reauth.
-                    raise APIError('Read temporarily unavailable') from None
+                    reason = failure(stage, exc)
+                    raise RecoveryError(stage, reason) from None
                 else:
                     await asyncio.sleep((1, 3)[attempt])
+                    attempt += 1
         raise APIError('Read temporarily unavailable')
 
     def schedule(self):

@@ -178,3 +178,17 @@ Home Assistant or HACS. Cloud APIs may change without notice. Heating controls
 operate a physical appliance: follow its manufacturer's instructions and do not
 use this integration as a safety interlock. Distributed under the MIT License,
 without warranty. Product names and trademarks belong to their respective owners.
+
+
+### Reconnect an existing account (v0.1.3)
+
+In **Settings → Devices & services → AigoSmart HA**, open the entry menu and
+choose **Reconfigure**. This opens Home Assistant's reauthentication flow.
+Confirm, then enter the original email and password. If asked,
+explicitly request the verification email and enter its code. Use the original
+account containing the original kettle. Success updates the current entry and
+reloads it, preserving entities, areas, options, dashboards and history.
+
+Cloud outages remain retryable. Confirmed rejected credentials trigger the same
+reauthentication flow automatically. Long-term live recovery has not yet been
+verified. Never remove the integration to renew its credentials.
