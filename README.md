@@ -192,3 +192,23 @@ reloads it, preserving entities, areas, options, dashboards and history.
 Cloud outages remain retryable. Confirmed rejected credentials trigger the same
 reauthentication flow automatically. Long-term live recovery has not yet been
 verified. Never remove the integration to renew its credentials.
+
+
+### Optional diagnostics beta: v0.1.4-beta.1
+
+The `beta/diagnostics-v014` branch adds passive diagnostic sensors and safe
+structured downloads. It is an opt-in pre-release; stable v0.1.3 remains current.
+The original three diagnostic sensors keep their unique IDs. All diagnostic
+entities remain disabled by default and add no cloud requests or per-second
+polling. New runtime counters/history reset on reload/restart.
+
+To install with HACS 2.x, open **HACS → AigoSmart HA → ⋮ → Redownload → Need a
+different version? → Release**, select **v0.1.4-beta.1**, then **Download** and
+restart Home Assistant. If it is absent, use **⋮ → Update information** first.
+Older HACS versions may require **Show beta versions**. Do not remove/re-add the
+integration. Select **v0.1.3** through the same menu to return to stable.
+
+Enable selected diagnostic entities under **Settings → Devices & services →
+Entities** (include disabled entities), or download diagnostics from the AigoSmart
+integration entry menu. See [diagnostic definitions and beta limits](docs/BETA_DIAGNOSTICS.md).
+Long-term live operation of this beta has not been validated.

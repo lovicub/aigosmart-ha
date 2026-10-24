@@ -7,10 +7,11 @@ from .protocol import APIError
 
 _LOGGER = logging.getLogger(__name__)
 _REASONS = {'confirmed_invalid_credentials', 'cloud_timeout', 'cloud_unavailable', 'response_validation'}
-_STAGES = {'token_refresh', 'model_tsl_fetch', 'device_list', 'property_read', 'session_restore'}
+_STAGES = {'token_refresh', 'model_tsl_fetch', 'device_list', 'property_read', 'session_restore', 'property_write'}
 
 
-def failure(stage, exc):
+def classify_failure(stage, exc):
+    """Return allowlisted categories without retaining the exception."""
     stage = stage if stage in _STAGES else 'property_read'
     if isinstance(exc, RecoveryError):
         stage, reason = exc.stage, exc.reason
@@ -24,6 +25,11 @@ def failure(stage, exc):
         reason = 'cloud_unavailable'
     else:
         reason = 'response_validation'
+    return stage, reason
+
+
+def failure(stage, exc):
+    stage, reason = classify_failure(stage, exc)
     _LOGGER.warning('AigoSmart recovery stage=%s reason=%s', stage, reason)
     return reason
 

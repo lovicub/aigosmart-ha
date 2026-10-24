@@ -281,9 +281,10 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
         coordinator = Mock(client=self.client, session=self.manager, device={'iotId': 'PRIVATE_ID'})
         self.entry.runtime_data = coordinator
         data = await async_get_config_entry_diagnostics(self.hass, self.entry)
-        self.assertEqual(set(data), {'authorization_status', 'session_time_remaining', 'last_successful_refresh'})
+        self.assertTrue({'authorization_status', 'session_time_remaining', 'last_successful_refresh'} <= set(data))
         self.assertNotIn('SECRET', json.dumps(data))
-        for key in data:
+        from custom_components.aigosmart.diagnostic_state import SENSOR_NAMES
+        for key in SENSOR_NAMES:
             sensor = AigoSessionSensor(coordinator, key)
             self.assertFalse(sensor.entity_registry_enabled_default)
             self.assertEqual(sensor.entity_category.value, 'diagnostic')

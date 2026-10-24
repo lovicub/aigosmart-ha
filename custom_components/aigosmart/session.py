@@ -6,6 +6,7 @@ import time
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.event import async_track_point_in_utc_time
 
+from .diagnostic_state import DiagnosticState
 from .api import is_auth_error
 from .protocol import APIError
 from .recovery import RecoveryError, failure
@@ -20,6 +21,7 @@ def transient(exc):
 class SessionManager:
     def __init__(self, hass, entry, client):
         self.hass, self.entry, self.client = hass, entry, client
+        self.diagnostics = DiagnosticState()
         self.status = 'authorized'
         self._task = None
         self._retry_at = 0
@@ -71,6 +73,7 @@ class SessionManager:
             for attempt, delay in enumerate((0, 1, 3)):
                 if delay:
                     await asyncio.sleep(delay)
+                self.diagnostics.refresh_started()
                 try:
                     await self.hass.async_add_executor_job(self.client.refresh_iot_token_sync)
                     # Persist the complete rotated session before exposing success.
@@ -78,8 +81,10 @@ class SessionManager:
                         data={**self.entry.data, **self.client.session})
                     self._retry_at = 0
                     self.status = 'authorized'
+                    self.diagnostics.last_refresh_result = 'success'
                     return
                 except Exception as exc:
+                    self.diagnostics.refresh_failed(exc)
                     reason = failure('token_refresh', exc)
                     if is_auth_error(exc):
                         self.status = 'reauth_required'
@@ -99,8 +104,11 @@ class SessionManager:
         while attempt < 3:
             token = self.client.token
             try:
-                return await self.hass.async_add_executor_job(method, *args)
+                result = await self.hass.async_add_executor_job(method, *args)
+                self.diagnostics.read_succeeded(stage)
+                return result
             except Exception as exc:
+                self.diagnostics.operation_failed(stage, exc)
                 if is_auth_error(exc) and not refreshed:
                     await self.ensure(rejected_token=token)
                     refreshed = True

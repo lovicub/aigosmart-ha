@@ -1,15 +1,13 @@
-from datetime import datetime, timezone
-import time
-
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.helpers.entity import EntityCategory
 from .entity import AigoEntity
+from .diagnostic_state import SENSOR_NAMES, TIMESTAMP_KEYS, diagnostic_values, utc_datetime
 
 async def async_setup_entry(hass, entry, async_add_entities):
     async_add_entities([AigoSensor(entry.runtime_data, key) for key in
         ('status', 'Target_temperature', 'Time', 'heatpreservation')] + [
         AigoSessionSensor(entry.runtime_data, key) for key in
-        ('session_time_remaining', 'last_successful_refresh', 'authorization_status')])
+        SENSOR_NAMES])
 
 class AigoSensor(AigoEntity, SensorEntity):
     @property
@@ -28,10 +26,8 @@ class AigoSessionSensor(AigoEntity, SensorEntity):
 
     def __init__(self, coordinator, key):
         super().__init__(coordinator, key)
-        self._attr_name = {'session_time_remaining': 'Session time remaining',
-            'last_successful_refresh': 'Last successful refresh',
-            'authorization_status': 'Authorization status'}[key]
-        if key == 'last_successful_refresh':
+        self._attr_name = SENSOR_NAMES[key]
+        if key in TIMESTAMP_KEYS:
             self._attr_device_class = SensorDeviceClass.TIMESTAMP
 
     @property
@@ -40,14 +36,8 @@ class AigoSessionSensor(AigoEntity, SensorEntity):
 
     @property
     def native_value(self):
-        session = self.coordinator.client.session
-        if self.key == 'authorization_status':
-            return self.coordinator.session.status
-        if self.key == 'last_successful_refresh':
-            value = session.get('last_refresh')
-            return datetime.fromtimestamp(value, timezone.utc) if value else None
-        end = session.get('iot_token_expires_at')
-        return max(0, int(end - time.time())) if end else None
+        value = diagnostic_values(self.coordinator.session)[self.key]
+        return utc_datetime(value) if self.key in TIMESTAMP_KEYS else value
 
     @property
     def native_unit_of_measurement(self):

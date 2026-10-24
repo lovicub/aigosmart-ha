@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.4-beta.1 — 2026-10-24 — DIAGNOSTICS BETA
+
+This opt-in beta is released only from `beta/diagnostics-v014`. Stable `main`
+and v0.1.3 remain unchanged. Long-term live operation is not validated.
+
+- Preserve the three existing diagnostic sensors and their unique IDs.
+- Add passive last successful cloud/device read times, last sanitized failed API
+  operation, last refresh attempt/result, failed refresh attempt count,
+  connection/recovery status and IoT/refresh-token expiration timestamps.
+- Extend downloadable diagnostics with a fixed structured allowlist, UTC times
+  and safe defaults when no runtime is available. Never export credentials,
+  identifiers, headers or raw cloud payloads.
+- Keep every diagnostic entity disabled by default and in the diagnostic category.
+  No extra requests or per-second timers; reuse existing coordinator updates.
+- New activity history and counters reset on integration reload/HA restart;
+  persisted token deadlines and last successful refresh retain their old meaning.
+- Add offline privacy, event accounting, no-extra-IO, registry compatibility,
+  cloud/offline recovery and write non-replay regressions.
+
+Kettle control policy, reconfiguration, token refresh and retry behavior are
+unchanged. See `docs/BETA_DIAGNOSTICS.md` for definitions and installation.
+
 ## 0.1.3 — 2026-10-24
 
 - Add a Reconfigure menu action that starts Home Assistant reauthentication,

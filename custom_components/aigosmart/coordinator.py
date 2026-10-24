@@ -29,6 +29,7 @@ class AigoCoordinator(DataUpdateCoordinator):
                 devices = await self.session.read(self.client.devices, stage=stage)
                 if not any(d.get('iotId') == self.device['iotId'] and type(d.get('status')) is int
                            and d['status'] == 1 for d in devices):
+                    self.session.diagnostics.connection_status = 'device_offline'
                     raise UpdateFailed('Device offline')
                 stage = 'property_read'
                 return await self.session.read(self.client.properties, self.device, stage=stage)
@@ -57,7 +58,8 @@ class AigoCoordinator(DataUpdateCoordinator):
                 self.write_result = 'accepted_unconfirmed'
             except ValueError:
                 raise HomeAssistantError('Value rejected by TSL or safety policy') from None
-            except Exception:
+            except Exception as exc:
+                self.session.diagnostics.operation_failed('property_write', exc)
                 self.write_result = 'outcome_unknown'
                 # Refresh via confirmation reads; never replay this write.
             # Re-read only; never reissue the command. Bound waits keep unload simple.

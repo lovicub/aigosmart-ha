@@ -1,4 +1,56 @@
-# Validation results — v0.1.3
+# Validation results — v0.1.4-beta.1
+
+Date: 2026-10-24. Python 3.14.4, Home Assistant 2026.10.2.
+Branch: `beta/diagnostics-v014`, based on stable main/v0.1.3 commit
+`87a6ebe74d04eb94144976ce191b4af97fb55ae2`. Main and the stable tag must remain
+at that commit; this beta is not merged into main.
+
+| Beta check | Result |
+| --- | --- |
+| Full offline suite, cryptography 50.0.1 | 150 passed |
+| Full offline suite, cryptography 48.0.1, isolated target | 150 passed |
+| New diagnostic regressions | 14 passed, included above |
+| Python syntax, JSON, whitespace, intended files and secret-pattern review | Passed locally |
+| ZIP integrity and source comparison | Passed locally |
+| HACS / hassfest / Python GitHub Actions | Required on the beta branch commit before pre-release publication; see its Actions run |
+| Live cloud / kettle / installed frontend | Not tested |
+
+The 136 stable tests remain in the full suite, including command non-replay,
+reauth/reconfigure, refresh rotation, concurrent refresh/reconnection, outages,
+restart and registry preservation. Beta tests additionally cover:
+
+- Safe structured downloads and timestamps with/without runtime state.
+- Cloud read versus device property-read success times.
+- Recovered failures retained as sanitized historical categories.
+- Individual failed refresh attempts versus cooldown skips; successful recovery.
+- Missing credentials versus actual rejected refresh requests.
+- One shared refresh for concurrent callers; no requests from repeated diagnostic
+  reads; no polling on diagnostic sensors; in-flight refresh visibility.
+- Preserved original unique IDs, entity IDs, custom names and areas using actual
+  HA entity registries; all diagnostic sensors disabled by default.
+- Invalid/non-finite/oversized timestamp inputs never exposing stored strings.
+- Reload counter reset while persisted last-refresh time retains its meaning.
+- Passive device-offline/recovery status and sanitized single-attempt write failure.
+
+All tests mock transports and block network connections. Cryptography versions
+are explicitly imported/verified; the 48.0.1 import target does not replace HA's
+entire dependency set. Local logs: `/tmp/aigo-v014-beta-tests-50.log` and
+`/tmp/aigo-v014-beta-tests-48.log`. Build: `python tools/build_zip.py` produces
+`dist/aigosmart-ha-0.1.4-beta.1.zip`, including the beta diagnostic definitions.
+
+All activity history/counts are in memory; reload/restart resets them. Token
+expiration and last successful refresh reuse persisted stable session fields.
+See `docs/BETA_DIAGNOSTICS.md` for exact semantics and HACS installation.
+
+Publication is a GitHub pre-release from the checked beta commit, explicitly
+`--prerelease --latest=false`. The latest stable release remains v0.1.3. No
+installed configuration entries, Premium Card or live heating commands are used.
+Long-term live operation is unverified. Final CI, tag/version and stable-main
+invariance are verified during publication and reported with the pre-release URL.
+
+---
+
+# Stable v0.1.3 validation — historical baseline
 
 Date: 2026-10-24. Python 3.14.4, Home Assistant 2026.10.2.
 
