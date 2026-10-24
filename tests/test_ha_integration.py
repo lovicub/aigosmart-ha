@@ -181,7 +181,7 @@ class HATests(unittest.IsolatedAsyncioTestCase):
         flow.client=Mock();flow.client.session={'refresh_token':'rotated', 'identity_id':'identity',
             'iot_token_expires_at': 2000000000, 'refresh_token_expires_at': 2000086400};flow.client.devices.return_value=[{'iotId':'fake'}]
         flow.credentials={'email':'a@example.test','password':'new'}
-        entry=Mock(data={'email':'a@example.test','device_id':'fake'})
+        entry=Mock(data={'email':'a@example.test','device_id':'fake'}, runtime_data=None)
         flow._get_reauth_entry=Mock(return_value=entry)
         flow.async_update_reload_and_abort=Mock(return_value={'type':'abort'})
         self.assertEqual((await flow._login())['type'],'abort')

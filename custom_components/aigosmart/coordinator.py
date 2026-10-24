@@ -7,6 +7,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .api import is_auth_error
 from .const import DEFAULT_INTERVAL
 from .session import SessionManager
+from .recovery import RecoveryError, failure
 
 class AigoCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, entry, client):
@@ -23,16 +24,22 @@ class AigoCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         async with self._io_lock:
+            stage = 'device_list'
             try:
-                devices = await self.session.read(self.client.devices)
+                devices = await self.session.read(self.client.devices, stage=stage)
                 if not any(d.get('iotId') == self.device['iotId'] and type(d.get('status')) is int
                            and d['status'] == 1 for d in devices):
                     raise UpdateFailed('Device offline')
-                return await self.session.read(self.client.properties, self.device)
+                stage = 'property_read'
+                return await self.session.read(self.client.properties, self.device, stage=stage)
+            except UpdateFailed:
+                raise
             except Exception as exc:
+                reason = failure(stage, exc)
+                stage = exc.stage if isinstance(exc, RecoveryError) else stage
                 if isinstance(exc, ConfigEntryAuthFailed) or is_auth_error(exc):
                     raise ConfigEntryAuthFailed('Authentication required') from None
-                raise UpdateFailed('Device unavailable') from None
+                raise UpdateFailed(f'{stage}: {reason}') from None
 
     async def async_write(self, identifier, value):
         async with self._io_lock:

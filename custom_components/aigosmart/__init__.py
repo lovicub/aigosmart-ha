@@ -4,20 +4,27 @@ async def async_setup_entry(hass, entry):
     from .api import AigoClient, is_auth_error
     from .const import PLATFORMS
     from .coordinator import AigoCoordinator
+    from .recovery import RecoveryError, failure
     client = AigoClient()
+    stage = 'session_restore'
     try:
         client.restore_session(entry.data)
         coordinator = AigoCoordinator(hass, entry, client)
         coordinator.session.require_credentials()
-        coordinator.model = await coordinator.session.read(client.model, coordinator.device)
+        stage = 'model_tsl_fetch'
+        coordinator.model = await coordinator.session.read(client.model, coordinator.device, stage=stage)
     except BaseException as exc:
         if 'coordinator' in locals():
             await coordinator.session.close()
-        if not isinstance(exc, Exception) or isinstance(exc, ConfigEntryAuthFailed):
+        if not isinstance(exc, Exception):
+            raise
+        reason = failure(stage, exc)
+        stage = exc.stage if isinstance(exc, RecoveryError) else stage
+        if isinstance(exc, ConfigEntryAuthFailed):
             raise
         if is_auth_error(exc):
             raise ConfigEntryAuthFailed('Authentication required') from None
-        raise ConfigEntryNotReady('API unavailable') from None
+        raise ConfigEntryNotReady(f'{stage}: {reason}') from None
     try:
         await coordinator.async_config_entry_first_refresh()
     except BaseException:

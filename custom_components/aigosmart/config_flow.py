@@ -31,17 +31,24 @@ class AigoFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self.credentials['email'], self.credentials['password'], code)
             self.devices = await self.hass.async_add_executor_job(self.client.devices)
         except NeedSecurityCodeError:
+            if code:
+                return self.async_show_form(step_id='security_code',
+                    data_schema=self._code_schema(), errors={'base': 'invalid_code'})
             return await self.async_step_security_code()
         except Exception as exc:
             return self.async_show_form(step_id='security_code' if code else 'user',
                 data_schema=self._code_schema() if code else vol.Schema({vol.Required('email'): str,
                     vol.Required('password'): selector.TextSelector(selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD))}),
-                errors={'base': 'invalid_auth' if is_auth_error(exc) else 'cannot_connect'})
+                errors={'base': ('invalid_code' if code else 'invalid_auth') if is_auth_error(exc) else 'cannot_connect'})
         if self.source == config_entries.SOURCE_REAUTH:
             entry = self._get_reauth_entry()
             if (self.credentials['email'].strip().casefold() != entry.data['email'].strip().casefold()
                     or not any(d.get('iotId') == entry.data['device_id'] for d in self.devices)):
                 return self.async_abort(reason='wrong_account')
+            runtime = getattr(entry, 'runtime_data', None)
+            if runtime is not None:
+                # Drain the old rotating refresh before replacing persisted credentials.
+                await runtime.session.close()
             data = {'email': self.credentials['email'], 'iot_token': self.client.token, **self.client.session}
             self.credentials.clear()
             self.client.token = None
@@ -82,6 +89,21 @@ class AigoFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self.client.session.clear()
             return self.async_create_entry(title='AigoSmart kettle', data=data)
         return self.async_show_form(step_id='device', data_schema=vol.Schema({vol.Required('device'): vol.In(choices)}))
+
+    async def async_step_reconfigure(self, user_input=None):
+        """Expose the menu action, delegating credentials to HA's reauth flow."""
+        entry = self._get_reconfigure_entry()
+        # async_start_reauth deliberately ignores entries with an active
+        # reconfigure flow. Start/reuse reauth explicitly and hand it to the UI.
+        result = next(entry.async_get_active_flows(
+            self.hass, {config_entries.SOURCE_REAUTH}), None)
+        if result is None:
+            result = await self.hass.config_entries.flow.async_init(DOMAIN, context={
+                'source': config_entries.SOURCE_REAUTH, 'entry_id': entry.entry_id,
+                'unique_id': entry.unique_id, 'title_placeholders': {'name': entry.title},
+            }, data=dict(entry.data))
+        return self.async_abort(reason='reauth_started',
+            next_flow=(config_entries.FlowType.CONFIG_FLOW, result['flow_id']))
 
     async def async_step_reauth(self, entry_data):
         return await self.async_step_reauth_confirm()

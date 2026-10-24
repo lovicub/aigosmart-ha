@@ -22,18 +22,24 @@
       },
       "reauth_confirm": {
         "title": "Reauthenticate"
+      },
+      "reconfigure": {
+        "title": "Reconnect account",
+        "description": "Continue to Home Assistant reauthentication to log in again."
       }
     },
     "error": {
       "cannot_connect": "Cannot connect",
       "invalid_auth": "Invalid credentials",
-      "cannot_send_code": "Cannot send code"
+      "cannot_send_code": "Cannot send code",
+      "invalid_code": "Verification code rejected. Check the code or request a new one."
     },
     "abort": {
       "already_configured": "Device already configured",
       "no_devices": "No devices available",
       "wrong_account": "Use the original account with the original device",
-      "reauth_successful": "Authentication updated"
+      "reauth_successful": "Authentication updated",
+      "reauth_started": "Continue to reauthentication."
     }
   },
   "options": {

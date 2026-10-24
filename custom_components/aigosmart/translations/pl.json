@@ -22,18 +22,24 @@
       },
       "reauth_confirm": {
         "title": "Ponowne uwierzytelnienie"
+      },
+      "reconfigure": {
+        "title": "Połącz konto ponownie",
+        "description": "Rozpocznij ponowne uwierzytelnianie w Home Assistant."
       }
     },
     "error": {
       "cannot_connect": "Brak połączenia",
       "invalid_auth": "Błędne dane logowania",
-      "cannot_send_code": "Nie można wysłać kodu"
+      "cannot_send_code": "Nie można wysłać kodu",
+      "invalid_code": "Kod weryfikacyjny odrzucony. Sprawdź kod lub poproś o nowy."
     },
     "abort": {
       "already_configured": "Urządzenie jest już skonfigurowane",
       "no_devices": "Brak urządzeń",
       "wrong_account": "Użyj pierwotnego konta z tym samym urządzeniem",
-      "reauth_successful": "Uwierzytelnienie zaktualizowane"
+      "reauth_successful": "Uwierzytelnienie zaktualizowane",
+      "reauth_started": "Przejdź do ponownego uwierzytelniania."
     }
   },
   "options": {

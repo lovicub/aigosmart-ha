@@ -22,18 +22,24 @@
       },
       "reauth_confirm": {
         "title": "Erneut anmelden"
+      },
+      "reconfigure": {
+        "title": "Konto erneut verbinden",
+        "description": "Die erneute Anmeldung über Home Assistant starten."
       }
     },
     "error": {
       "cannot_connect": "Keine Verbindung",
       "invalid_auth": "Ungültige Anmeldedaten",
-      "cannot_send_code": "Code konnte nicht gesendet werden"
+      "cannot_send_code": "Code konnte nicht gesendet werden",
+      "invalid_code": "Bestätigungscode abgelehnt. Prüfen Sie den Code oder fordern Sie einen neuen an."
     },
     "abort": {
       "already_configured": "Gerät bereits eingerichtet",
       "no_devices": "Keine Geräte verfügbar",
       "wrong_account": "Ursprüngliches Konto mit demselben Gerät verwenden",
-      "reauth_successful": "Anmeldung aktualisiert"
+      "reauth_successful": "Anmeldung aktualisiert",
+      "reauth_started": "Weiter zur erneuten Anmeldung."
     }
   },
   "options": {
