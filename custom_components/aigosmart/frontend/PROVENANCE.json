@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/lovicub/aigosmart-premium-card",
+  "version": "0.1.1-beta.1",
+  "commit": "f4bb918d261d63a49ed40f27c194b5f8be555e8d",
+  "sha256": {
+    "LICENSE": "647f8ffc11b731e404d1aa56734eefaf7a0c6924ea90031fa440dc0d6438cd6e",
+    "aigosmart-ha-integrated-card.js": "8e3f21f538e5bee0852cc2e3ab5f5ebb10875f7a83e605c8e94ac9bfd0d8d636",
+    "aigosmart-premium-card.source.js": "52502c7e5dd185a3f43f0bc61a90616ff510f9487e22a9095ebc258979617016"
+  }
+}

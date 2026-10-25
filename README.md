@@ -1,10 +1,12 @@
 # AigoSmart HA
 
 Native Home Assistant integration for AigoSmart kettles using the AigoSmart /
-Alibaba IoT cloud API. Version **0.1.4-beta.4**, opt-in beta based on stable **v0.1.3**.
+Alibaba IoT cloud API. Version **0.1.4-beta.5**, opt-in beta based on stable **v0.1.3**.
 
-Optional dashboard companion: [AigoSmart Premium Card](https://github.com/lovicub/aigosmart-premium-card).
-The integration works independently; the card has its own installation and configuration.
+Includes **AigoSmart HA Integrated**, a bundled Premium dashboard card, installed
+and updated with this integration. No second HACS frontend installation is needed.
+The separately installed [AigoSmart Premium Card](https://github.com/lovicub/aigosmart-premium-card)
+remains supported under its original name and resource URL; both can coexist.
 <img width="1986" height="1242" alt="image" src="https://github.com/user-attachments/assets/41df2fe4-09f4-41ee-a909-ca9b675c9370" />
 
 This recovery and diagnostics beta preserves usable sessions during proactive
@@ -200,7 +202,7 @@ reauthentication flow automatically. Long-term live recovery has not yet been
 verified. Never remove the integration to renew its credentials.
 
 
-### Optional session recovery + diagnostics beta: v0.1.4-beta.4
+### Optional integrated card + session recovery beta: v0.1.4-beta.5
 
 The `beta/diagnostics-v014` branch adds passive diagnostic sensors and safe
 structured downloads. It is an opt-in pre-release; stable v0.1.3 remains current.
@@ -209,7 +211,7 @@ entities remain disabled by default and add no cloud requests or per-second
 polling. New runtime counters/history reset on reload/restart.
 
 To install with HACS 2.x, open **HACS → AigoSmart HA → ⋮ → Redownload → Need a
-different version? → Release**, select **v0.1.4-beta.4**, then **Download** and
+different version? → Release**, select **v0.1.4-beta.5**, then **Download** and
 restart Home Assistant. If it is absent, use **⋮ → Update information** first.
 Older HACS versions may require **Show beta versions**. Do not remove/re-add the
 integration. Select **v0.1.3** through the same menu to return to stable.
@@ -289,3 +291,63 @@ updated card, which always sends an option actually offered by HA.
 Stable main and v0.1.3 remain unchanged. Token refresh, rotation, recovery,
 reconfiguration/reauthentication and write non-replay remain present. No config
 migration is required; long-term live operation remains unverified.
+
+## Bundled dashboard card (beta.5)
+
+HACS includes the frontend directory automatically with the integration. Restart
+HA after installing/updating. In Lovelace **resource storage mode**, the integration
+registers only its own versioned module resource after loading HA's resource
+collection. It does not create cards or edit dashboards. Add **AigoSmart HA
+Integrated** from the card picker, or use this YAML with your existing entity IDs:
+
+```yaml
+type: custom:aigosmart-ha-integrated-card
+name: Kitchen kettle
+power_entity: switch.kettle
+target_entity: number.kettle_target
+mode_entity: select.kettle_mode
+status_entity: sensor.kettle_status
+keep_warm_entity: number.kettle_warm
+time_entity: sensor.kettle_time
+confirm_start: true
+```
+
+For **YAML resource mode**, merge this resource into your existing configuration;
+no resources are automatically changed in YAML mode:
+
+```yaml
+lovelace:
+  resource_mode: yaml
+  resources:
+    - url: /aigosmart-ha-integrated/aigosmart-ha-integrated-card.js?v=0.1.4-beta.5-card-0.1.1-beta.1
+      type: module
+```
+
+Existing standalone card users: **no migration required**. Keep your separate HACS
+frontend installation or manual resource and all existing dashboard YAML unchanged:
+
+```yaml
+type: custom:aigosmart-premium-card
+name: Kitchen kettle
+power_entity: switch.kettle
+target_entity: number.kettle_target
+mode_entity: select.kettle_mode
+```
+
+Both types work on the same dashboard. The integration never renames the old
+element, changes its resource, or replaces stored cards. You may optionally copy a
+card and change only its type to try the integrated version; retain your explicit
+entity settings and confirmation preferences. Numeric Mode options and entity IDs
+are unchanged. The integrated footer reads “AigoSmart HA Integrated”.
+
+If the new element is unavailable, restart HA, check the sanitized integration log,
+and reload the browser with cache cleared. Check Settings → Dashboards → Resources
+(advanced mode) for the integrated URL above, alongside any standalone resource.
+Do not remove the standalone resource while old cards use it. After future updates,
+YAML users update the version query themselves. Headless/frontend failures do not
+prevent device integration setup. Resources remain on entry unload and are reused
+on reload/restart; no dashboard is modified.
+
+The bundled snapshot is pinned to card v0.1.1-beta.1, commit
+`f4bb918d261d63a49ed40f27c194b5f8be555e8d`, under the original MIT license.
+See [vendor provenance and offline validation](docs/INTEGRATED_CARD_BETA5.md).

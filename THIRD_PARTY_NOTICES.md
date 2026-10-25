@@ -54,3 +54,14 @@ v0.1.4-beta.4 additionally reviews JuanmanDev/aigo-smart commit
 The independent recovery changes do not adopt upstream raw-response logging,
 credential retention or write retries. See docs/SESSION_REFRESH_BETA4.md for
 per-file references and provider documentation. Existing notices are retained.
+
+## Bundled Premium Card snapshot
+
+AigoSmart Premium Card v0.1.1-beta.1 by AigoSmart project contributors,
+https://github.com/lovicub/aigosmart-premium-card, commit
+f4bb918d261d63a49ed40f27c194b5f8be555e8d, MIT License.
+Copyright (c) 2026 AigoSmart project contributors.
+The exact license accompanies the snapshot in
+`custom_components/aigosmart/frontend/LICENSE`. The integration adapts its name,
+JavaScript scope and footer only; provenance hashes are in `PROVENANCE.json`.
+The card regression tests are adapted from that same pinned MIT source.

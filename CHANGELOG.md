@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.4-beta.5 — 2026-10-25 — BUNDLED INTEGRATED CARD (prepared locally)
+
+- Bundle the pinned MIT Premium Card v0.1.1-beta.1 snapshot as the distinct
+  `custom:aigosmart-ha-integrated-card`, titled AigoSmart HA Integrated, with
+  a readable attribution footer and isolated JavaScript scope.
+- Preserve the separately installed `custom:aigosmart-premium-card`, resources,
+  dashboard YAML, service semantics, numeric modes and confirmation interlocks.
+  Both cards can load together; no migration or second frontend install is needed.
+- Serve a unique versioned module through async static paths. Load the Lovelace
+  storage collection before any resource inspection/write; register only our own
+  resource idempotently. YAML resources remain user-managed; failures are optional.
+- Preserve all beta.4 session recovery, diagnostics and one-attempt device safety.
+- Include vendor hashes, exact MIT license, reproducible sync, ZIP assets and
+  offline storage/coexistence/control regression coverage.
+
+
 ## 0.1.4-beta.4 — 2026-10-25 — SESSION RECOVERY + DIAGNOSTIC BETA
 
 - Preserve still-valid IoT tokens after failed proactive renewal; never reuse a known rejected token.

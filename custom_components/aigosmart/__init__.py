@@ -39,6 +39,14 @@ async def async_setup_entry(hass, entry):
     except BaseException:
         await coordinator.session.close()
         raise
+    try:
+        from .frontend import async_schedule_frontend
+        async_schedule_frontend(hass)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning(
+            'Integrated card setup failed; cloud integration remains available'
+        )
     return True
 
 async def _reload(hass, entry):
