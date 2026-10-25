@@ -7,6 +7,10 @@ Optional dashboard companion: [AigoSmart Premium Card](https://github.com/lovicu
 The integration works independently; the card has its own installation and configuration.
 <img width="1986" height="1242" alt="image" src="https://github.com/user-attachments/assets/41df2fe4-09f4-41ee-a909-ca9b675c9370" />
 
+<img width="364" height="646" alt="image" src="https://github.com/user-attachments/assets/5e33097f-9206-4ab8-9ed6-ae27de4faccf" />
+
+<img width="372" height="608" alt="image" src="https://github.com/user-attachments/assets/e02ade11-472b-4570-a787-f5dcfa67bdaf" />
+
 ## Features
 
 - UI account setup with email security-code verification and reauthentication.
