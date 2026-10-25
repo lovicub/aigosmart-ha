@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.4-beta.6 — 2026-10-25 — HASSFEST DEPENDENCY FIX
+
+- Declare `http` in `after_dependencies`, retaining `frontend` and `lovelace`,
+  to fix hassfest validation of the bundled card static-path registration.
+- Bump the integration and versioned resource URL to beta.6. Preserve the
+  bundled integrated card, independent Premium Card compatibility, dashboard
+  YAML, session diagnostics, recovery behavior and native Mode translations.
+
 ## 0.1.4-beta.5 — 2026-10-25 — BUNDLED INTEGRATED CARD (prepared locally)
 
 - Bundle the pinned MIT Premium Card v0.1.1-beta.1 snapshot as the distinct

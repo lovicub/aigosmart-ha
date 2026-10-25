@@ -1,7 +1,7 @@
 # AigoSmart HA
 
 Native Home Assistant integration for AigoSmart kettles using the AigoSmart /
-Alibaba IoT cloud API. Version **0.1.4-beta.5**, opt-in beta based on stable **v0.1.3**.
+Alibaba IoT cloud API. Version **0.1.4-beta.6**, opt-in beta based on stable **v0.1.3**.
 
 Includes **AigoSmart HA Integrated**, a bundled Premium dashboard card, installed
 and updated with this integration. No second HACS frontend installation is needed.
@@ -202,7 +202,7 @@ reauthentication flow automatically. Long-term live recovery has not yet been
 verified. Never remove the integration to renew its credentials.
 
 
-### Optional integrated card + session recovery beta: v0.1.4-beta.5
+### Optional integrated card + session recovery beta: v0.1.4-beta.6
 
 The `beta/diagnostics-v014` branch adds passive diagnostic sensors and safe
 structured downloads. It is an opt-in pre-release; stable v0.1.3 remains current.
@@ -211,7 +211,7 @@ entities remain disabled by default and add no cloud requests or per-second
 polling. New runtime counters/history reset on reload/restart.
 
 To install with HACS 2.x, open **HACS → AigoSmart HA → ⋮ → Redownload → Need a
-different version? → Release**, select **v0.1.4-beta.5**, then **Download** and
+different version? → Release**, select **v0.1.4-beta.6**, then **Download** and
 restart Home Assistant. If it is absent, use **⋮ → Update information** first.
 Older HACS versions may require **Show beta versions**. Do not remove/re-add the
 integration. Select **v0.1.3** through the same menu to return to stable.
@@ -292,7 +292,7 @@ Stable main and v0.1.3 remain unchanged. Token refresh, rotation, recovery,
 reconfiguration/reauthentication and write non-replay remain present. No config
 migration is required; long-term live operation remains unverified.
 
-## Bundled dashboard card (beta.5)
+## Bundled dashboard card (beta.6)
 
 HACS includes the frontend directory automatically with the integration. Restart
 HA after installing/updating. In Lovelace **resource storage mode**, the integration
@@ -319,7 +319,7 @@ no resources are automatically changed in YAML mode:
 lovelace:
   resource_mode: yaml
   resources:
-    - url: /aigosmart-ha-integrated/aigosmart-ha-integrated-card.js?v=0.1.4-beta.5-card-0.1.1-beta.1
+    - url: /aigosmart-ha-integrated/aigosmart-ha-integrated-card.js?v=0.1.4-beta.6-card-0.1.1-beta.1
       type: module
 ```
 

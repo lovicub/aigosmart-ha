@@ -169,7 +169,7 @@ class VendorTests(unittest.TestCase):
         self.assertEqual(transform((p / 'aigosmart-premium-card.source.js').read_text()),
                          (p / 'aigosmart-ha-integrated-card.js').read_text())
         self.assertIn('Copyright (c) 2026 AigoSmart project contributors', (p / 'LICENSE').read_text())
-        self.assertEqual(f.VERSION, '0.1.4-beta.5')
+        self.assertEqual(f.VERSION, '0.1.4-beta.6')
         self.assertNotIn('http', (p / 'aigosmart-ha-integrated-card.js').read_text())
 
     def test_package(self):
