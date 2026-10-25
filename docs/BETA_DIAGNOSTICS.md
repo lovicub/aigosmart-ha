@@ -1,4 +1,6 @@
-# v0.1.4-beta.3 — passive diagnostics beta
+# v0.1.4-beta.4 — passive diagnostics beta
+
+See [session recovery investigation](SESSION_REFRESH_BETA4.md) for beta.4 changes, safe refresh diagnostics and remaining production verification.
 
 This beta is confined to `beta/diagnostics-v014`. It does not change stable main,
 replace the stable v0.1.3 release or modify the Premium Card. It observes existing
@@ -56,7 +58,7 @@ existing activity, never from a cloud request initiated by a diagnostic download
 2. Choose **⋮ → Update information** if the beta is not listed yet.
 3. Choose **⋮ → Redownload**.
 4. Expand **Need a different version?**, open **Release**, and select
-   **v0.1.4-beta.3**. Older HACS UIs may use a **Show beta versions** toggle.
+   **v0.1.4-beta.4**. Older HACS UIs may use a **Show beta versions** toggle.
 5. Choose **Download**, then restart Home Assistant.
 6. Enable selected diagnostics in **Settings → Devices & services → Entities**,
    including disabled entities in the filter. Download JSON from the integration

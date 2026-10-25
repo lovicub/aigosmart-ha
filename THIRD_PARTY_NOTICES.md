@@ -46,3 +46,11 @@ documents `iotTokenExpire` and `refreshTokenExpire` as durations in seconds.
 The [Alibaba error code dictionary](https://help.aliyun.com/en/document_detail/127995.html)
 provides the reviewed authentication error vocabulary, including 100003 for an
 invalid or expired refresh token. Unknown codes and server messages are redacted.
+
+
+v0.1.4-beta.4 additionally reviews JuanmanDev/aigo-smart commit
+66173b5235a70e2b7bf6bf136823d168972ca2c1 (MIT) and the Marco commit above
+(MIT verified through GitHub). No source is copied, imported or executed.
+The independent recovery changes do not adopt upstream raw-response logging,
+credential retention or write retries. See docs/SESSION_REFRESH_BETA4.md for
+per-file references and provider documentation. Existing notices are retained.

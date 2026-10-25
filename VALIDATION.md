@@ -1,3 +1,32 @@
+# Validation results — v0.1.4-beta.4
+
+Date: 2026-10-25. Branch: `beta/diagnostics-v014`, based on beta.3
+`73426518197136dd1dadae14488bfa31255d2206`. Python 3.14.4; HA 2026.10.3.
+
+| Check | Result |
+| --- | --- |
+| Entire offline suite / cryptography 48.0.1 | 185 passed; isolated version asserted |
+| Entire offline suite / cryptography 50.0.1 | 185 passed; imported version asserted |
+| New recovery/shape/concurrency/rate-limit regressions | 21 included above |
+| Existing Mode/translation/registry and one-attempt write regressions | Passed in both full suites |
+| Git diff whitespace and release ZIP integrity/source identity | Checked locally |
+| GitHub crypto matrix, HACS, hassfest, native-select frontend | Must pass on the exact published beta commit |
+| Live cloud refresh / Home Assistant installation / kettle writes | Not performed |
+
+Tests deny network connections and use synthetic response fixtures. No real
+account data is present. Existing cancellation/restart tests verify session
+rotation survives graceful drain and cancelled waiters. The manual-login race
+regression now drains refresh before invoking login, and retains entry/entity IDs.
+Unsupported alternate envelopes remain rejection tests: no alternative supported
+success envelope was verified. Full login with user-entered credentials and email
+verification is covered by existing flow tests. Automatic password fallback is
+unavailable by design; no password is persisted or recovered from other sources.
+
+See [the investigation and evidence limits](docs/SESSION_REFRESH_BETA4.md).
+This beta does not establish the cause of the reported production failure.
+
+---
+
 # Validation results — v0.1.4-beta.3
 
 Date: 2026-10-24. Branch: `beta/diagnostics-v014`.

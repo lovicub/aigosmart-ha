@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.4-beta.4 — 2026-10-25 — SESSION RECOVERY + DIAGNOSTIC BETA
+
+- Preserve still-valid IoT tokens after failed proactive renewal; never reuse a known rejected token.
+- Serialize manual login with renewal, retain failed-login credentials, and preserve rotation persistence.
+- Add bounded exponential cooldowns with jitter for renewal/read outages; retain original failure categories during cooldown.
+- Rate-limit recovery warnings, summarize suppression and log successful recovery transitions.
+- Add allowlisted response envelope, field/type, expiry representation, validation, HTTP category and vendor-code diagnostics. Never retain response values or bodies.
+- Request HA reauthentication after repeated structurally unusable renewal once the old token expires; no password storage or invented TTL.
+- Preserve beta.3 Mode translations, numeric writes, IDs, card compatibility and one-attempt write safety.
+- Compare both reference implementations and provider docs in [the investigation report](docs/SESSION_REFRESH_BETA4.md). The production root cause remains unconfirmed; natural expiry testing is required.
+
 ## 0.1.4-beta.3 — 2026-10-24 — NATIVE MODE DROPDOWN LABELS
 
 - Enable native HA select option translations via `translation_key: mode` and

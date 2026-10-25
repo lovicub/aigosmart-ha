@@ -43,7 +43,7 @@ class ProtocolTests(unittest.TestCase):
         c = AigoClient(Mock())
         c.accept_session(response())
         old = dict(c.session)
-        for value in (None, 0, -1, True, 'secret', float('inf'), 'nan'):
+        for value in (None, 0, -1, True, 'secret', float('inf'), 'nan', 1e100, 10**1000):
             with self.subTest(value=value), self.assertRaises(p.APIError):
                 c.accept_session(response(iotToken='ROTATED', iotTokenExpire=value), refresh=True)
             self.assertEqual(c.session, old)
@@ -164,7 +164,10 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
         with patch('custom_components.aigosmart.session.asyncio.sleep', new=AsyncMock()) as sleep:
             with self.assertRaises(p.APIError):
                 await self.manager.ensure()
-            self.assertEqual([c.args[0] for c in sleep.await_args_list if c.args[0]], [1, 3])
+            delays = [c.args[0] for c in sleep.await_args_list if c.args[0]]
+            self.assertEqual(len(delays), 2)
+            for actual, base in zip(delays, (1, 3)):
+                self.assertTrue(base * .8 <= actual <= base * 1.2)
         self.assertEqual(self.send.call_count, 3)
         self.assertEqual(self.entry.data, old)
         self.assertEqual(self.manager.status, 'refresh_unavailable')

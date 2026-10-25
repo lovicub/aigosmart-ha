@@ -1,4 +1,5 @@
 """Export only reviewed non-sensitive diagnostic values, including offline entries."""
+import time
 from .diagnostic_state import diagnostic_values, iso_timestamp
 
 
@@ -25,6 +26,12 @@ async def async_get_config_entry_diagnostics(hass, entry):
             'last_result': values['last_refresh_result'],
             'failed_attempt_count': values['failed_refresh_count'],
             'counter_scope': 'since_session_start',
+            'response': getattr(manager.client, 'refresh_diagnostics', None) if manager else None,
+            'cooldown_active': bool(manager and manager._retry_at > time.time()),
+            'retry_at': iso_timestamp(manager._retry_at) if manager else None,
+            'failed_cycles': manager._failure_cycles if manager else 0,
+            'read_retry_at': iso_timestamp(manager._read_retry_at) if manager else None,
+            'full_login_fallback': 'unavailable_no_stored_password',
         },
         'connection_status': values['connection_status'],
         'token_expiration': {

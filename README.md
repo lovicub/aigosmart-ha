@@ -1,11 +1,17 @@
 # AigoSmart HA
 
 Native Home Assistant integration for AigoSmart kettles using the AigoSmart /
-Alibaba IoT cloud API. Version **0.1.4-beta.3**, opt-in beta based on stable **v0.1.3**.
+Alibaba IoT cloud API. Version **0.1.4-beta.4**, opt-in beta based on stable **v0.1.3**.
 
 Optional dashboard companion: [AigoSmart Premium Card](https://github.com/lovicub/aigosmart-premium-card).
 The integration works independently; the card has its own installation and configuration.
 <img width="1986" height="1242" alt="image" src="https://github.com/user-attachments/assets/41df2fe4-09f4-41ee-a909-ca9b675c9370" />
+
+This recovery and diagnostics beta preserves usable sessions during proactive
+refresh failures, limits repeated warnings, and records safe refresh response
+shapes. The reported 12–24 hour failure is **not yet confirmed fixed**. See the
+[source comparison, findings, limitations and diagnostic instructions](docs/SESSION_REFRESH_BETA4.md).
+No password is stored; provider-rejected renewal may require HA reauthentication.
 
 ## Features
 
@@ -194,7 +200,7 @@ reauthentication flow automatically. Long-term live recovery has not yet been
 verified. Never remove the integration to renew its credentials.
 
 
-### Optional diagnostics + enum beta: v0.1.4-beta.3
+### Optional session recovery + diagnostics beta: v0.1.4-beta.4
 
 The `beta/diagnostics-v014` branch adds passive diagnostic sensors and safe
 structured downloads. It is an opt-in pre-release; stable v0.1.3 remains current.
@@ -203,7 +209,7 @@ entities remain disabled by default and add no cloud requests or per-second
 polling. New runtime counters/history reset on reload/restart.
 
 To install with HACS 2.x, open **HACS → AigoSmart HA → ⋮ → Redownload → Need a
-different version? → Release**, select **v0.1.4-beta.3**, then **Download** and
+different version? → Release**, select **v0.1.4-beta.4**, then **Download** and
 restart Home Assistant. If it is absent, use **⋮ → Update information** first.
 Older HACS versions may require **Show beta versions**. Do not remove/re-add the
 integration. Select **v0.1.3** through the same menu to return to stable.
