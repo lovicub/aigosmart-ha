@@ -10,7 +10,7 @@ from .protocol import APIError
 _LOGGER = logging.getLogger(__name__)
 _WARNINGS = {}
 _WARNING_INTERVAL = 300
-_REASONS = {'confirmed_invalid_credentials', 'cloud_timeout', 'cloud_unavailable', 'response_validation'}
+_REASONS = {'confirmed_invalid_credentials', 'cloud_timeout', 'cloud_unavailable', 'response_validation', 'application_rejection'}
 _STAGES = {'token_refresh', 'model_tsl_fetch', 'device_list', 'property_read', 'session_restore', 'property_write'}
 
 
@@ -29,6 +29,8 @@ def classify_failure(stage, exc):
         reason = 'cloud_unavailable'
     elif isinstance(exc, APIError) and (exc.status == 429 or exc.status is not None and exc.status >= 500 or exc.code in {'429', '500', '502', '503'}):
         reason = 'cloud_unavailable'
+    elif isinstance(exc, APIError) and exc.validation == 'application_rejection':
+        reason = 'application_rejection'
     else:
         reason = 'response_validation'
     return stage, reason

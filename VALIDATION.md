@@ -1,3 +1,17 @@
+# v0.1.4-beta.7 validation — 2026-10-26
+
+- Reconstructed all 86 issue #12 tracked/untracked source files with byte parity before edits; tested ZIP SHA-256 verified. Original issue #12 files rechecked unchanged.
+- Runtime source parity except manifest beta.7 version; resource cache URL derives from manifest. Bundled frontend and translations unchanged.
+- Python 3.14.4: 217 offline tests passed with cryptography 48.0.1 and 217 with 50.0.1 (imported versions verified); existing test environment, no HA installed.
+- Node 22.23.4: all 33 JavaScript tests passed.
+- Signed refresh-body test independently recomputes MD5/HMAC and checks nested params.request, apiVer 1.0.4, token rotation and expiry.
+- JSON/Python syntax, git diff whitespace, complete ZIP/source byte parity and two deterministic builds passed.
+- Reviewed inherited diagnostic reports and new changes; scanned source/tests/docs/tools for private-key, GitHub credential, AWS credential and JWT patterns; no matches. Diagnostic regressions cover redaction with synthetic data. No private captures included.
+- No live Alibaba requests or appliance actions. User observed one successful manual refresh on issue #12; automatic timer success and a 20-hour run remain unproven.
+- Publication requires all five GitHub Validate jobs on this commit: tests (48.0.1), tests (50.0.1), hacs, hassfest, native_select_frontend.
+
+Historical validation follows.
+
 # Validation results — v0.1.4-beta.4
 
 Date: 2026-10-25. Branch: `beta/diagnostics-v014`, based on beta.3

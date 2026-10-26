@@ -1,0 +1,12 @@
+{
+  "custom_components/aigosmart/button.py": "2d0c123461347e3075c94f193675f2b0863e225d70c060d2ecb506bed226bc54",
+  "docs/LOCAL_MANUAL_REFRESH.md": "99ae655abfb5b1f8a856e779a8ebfb980333788ecec062b8a3abcf5d60a4fec4",
+  "tests/test_manual_refresh.py": "46784d57e5a9373db52be798583d824bc654f467610263dc6f89b13c01734b1d",
+  "tools/build_manual_refresh_zip.py": "a70f685f28c11553458096e5e4a4cac82de298cda519c924da0a518667a19e9b",
+  "custom_components/aigosmart/const.py": "d342deb26263afe9b1b864265577c62543fe7127e571f8c691f67b075eeade46",
+  "custom_components/aigosmart/session.py": "5c2c0cde54a4575612be6fb3c81527768f0b11df2f04212c991128479a798ae2",
+  "custom_components/aigosmart/strings.json": "c51ede8f46ce721aae9a83d0d1e94804ea74f96feec07410dd2dcae535372b56",
+  "custom_components/aigosmart/translations/de.json": "78fcde28c83b19478782bc40c963c2ada25fa859364c5a4216ea9780addef8b6",
+  "custom_components/aigosmart/translations/en.json": "c51ede8f46ce721aae9a83d0d1e94804ea74f96feec07410dd2dcae535372b56",
+  "custom_components/aigosmart/translations/pl.json": "b2e69f1a024040d0242cd7fe566ab5c8216700dde730b73440786d39a3bb4cc3"
+}

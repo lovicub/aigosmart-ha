@@ -68,6 +68,11 @@
           "2": "Heating and keep warm"
         }
       }
+    },
+    "button": {
+      "refresh_iot_token": {
+        "name": "Refresh IoT Token"
+      }
     }
   }
 }

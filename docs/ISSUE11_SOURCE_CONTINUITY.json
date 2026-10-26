@@ -1,0 +1,23 @@
+{
+  "source_worktree": "/home/adam/codex-bridge/workspaces/issue-10-aigosmart-ha",
+  "source_head": "8e326c9adc31784162774d0083bb96e476bf73a4",
+  "modified_and_untracked_sha256": {
+    "custom_components/aigosmart/button.py": "2d0c123461347e3075c94f193675f2b0863e225d70c060d2ecb506bed226bc54",
+    "custom_components/aigosmart/const.py": "d342deb26263afe9b1b864265577c62543fe7127e571f8c691f67b075eeade46",
+    "custom_components/aigosmart/protocol.py": "346b463d13615258100444f41a236954b1678b74fe2da1196ffb8795886563a0",
+    "custom_components/aigosmart/session.py": "8020a16c05ef661639869524798358cf66a0e67db21902343f50cd5b8e424db2",
+    "custom_components/aigosmart/strings.json": "c51ede8f46ce721aae9a83d0d1e94804ea74f96feec07410dd2dcae535372b56",
+    "custom_components/aigosmart/translations/de.json": "78fcde28c83b19478782bc40c963c2ada25fa859364c5a4216ea9780addef8b6",
+    "custom_components/aigosmart/translations/en.json": "c51ede8f46ce721aae9a83d0d1e94804ea74f96feec07410dd2dcae535372b56",
+    "custom_components/aigosmart/translations/pl.json": "b2e69f1a024040d0242cd7fe566ab5c8216700dde730b73440786d39a3bb4cc3",
+    "docs/LOCAL_MANUAL_REFRESH.md": "c6ea0ce7d9672295d09bc67b482d272a7baaef484d7eecaf5cb8549854518fed",
+    "docs/LOCAL_SOURCE_CONTINUITY.json": "f121a7e0e1b18f1e9cfc6de40c1194d206078df705b84e184ec327692d78bf92",
+    "tests/test_manual_refresh.py": "dfdfe1601efd969385ab810fd4d0c76996e8d12fe9a31035456d9ec5423649f9",
+    "tests/test_refresh_precision.py": "0f124b974ac8ed49424ce759dd3af7b68ab10dfb7813deb1dc6b400b4c7e1379",
+    "tools/build_manual_refresh_zip.py": "96104197d6dae9559aa559684deaca919df29731c2dea5605f93b0551d62cc9a"
+  },
+  "initial_copy_entire_component_byte_parity": true,
+  "issue10_zip_source_byte_parity": true,
+  "baseline_tests": 211,
+  "source_zip_sha256": "b6b8036fd8f71e09397bb1bd713dfedce9709bf39fbb379e930b47ab5310ce00"
+}

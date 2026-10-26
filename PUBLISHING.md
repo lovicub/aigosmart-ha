@@ -1,3 +1,9 @@
+# Beta.7 publication
+
+Publish only beta/diagnostics-v014 after all five Validate jobs succeed.
+Use annotated v0.1.4-beta.7, prerelease=true, latest=false. Never replace tags.
+Release notes: docs/RELEASE_BETA7.md. Preserve main and previous releases.
+
 # Beta publication — v0.1.4-beta.6
 
 Publish only `beta/diagnostics-v014`; never merge this release into stable main.

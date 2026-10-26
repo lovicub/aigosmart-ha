@@ -56,7 +56,7 @@ class ProtocolTests(unittest.TestCase):
         c.refresh_iot_token_sync()
         body = json.loads(send.call_args.args[3])
         self.assertEqual(send.call_args.args[1], p.IOT + p.REFRESH)
-        self.assertEqual(body['params'], {'refreshToken': 'OLD_REFRESH', 'identityId': 'IDENTITY_SECRET'})
+        self.assertEqual(body['params'], {'request': {'refreshToken': 'OLD_REFRESH', 'identityId': 'IDENTITY_SECRET'}})
         self.assertEqual(body['request']['apiVer'], '1.0.4')
         self.assertNotIn('iotToken', body['request'])
         self.assertEqual(c.session['refresh_token'], 'NEW_REFRESH_SECRET')

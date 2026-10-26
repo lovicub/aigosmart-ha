@@ -214,7 +214,7 @@ def transport(method, url, headers, body):
         raise
     except Exception as exc:
         raise APIError('Błąd połączenia lub formatu odpowiedzi API.',
-                       status=status, exception=safe_exception(exc)) from None
+                       status=status, exception=safe_exception(exc), validation='transport') from None
 
 
 def encrypt_password(password):
@@ -251,7 +251,20 @@ def session_shape(result):
         if not math.isfinite(number) or number <= 0:
             return 'invalid_numeric'
         return 'duration_seconds'
-    return {'envelope': kinds.get(type(result), 'other'),
+    root = {}
+    for key in ('code', 'status', 'success', 'ok', 'message', 'error', 'error_description'):
+        root[key] = (kinds.get(type(result[key]), 'other')
+                     if isinstance(result, dict) and key in result else 'missing')
+    # Fixed classifications only; never retain message contents or unknown codes.
+    code = response_diagnostics(result)
+    return {'root_fields': root,
+            'code_type': code['code_type'],
+            'message_state': 'present' if isinstance(result, dict) and 'message' in result else 'absent',
+            'code_category': code['code_category'],
+            'vendor_code': safe_code(result),
+            'data_state': ('absent' if isinstance(result, dict) and 'data' not in result
+                           else 'null' if data is None else 'object' if isinstance(data, dict) else 'invalid'),
+            'envelope': 'object' if isinstance(result, dict) else kinds.get(type(result), 'other'),
             'data_type': kinds.get(type(data), 'other'), 'fields': fields,
             'expiry_representation': {
                 key: expiry_kind(key)
@@ -260,12 +273,32 @@ def session_shape(result):
 
 def safe_refresh_error(exc):
     validations = {'response_validation', 'http_status', 'json_decode', 'json_object',
-                   'response_size', 'session_data_type', 'required_field'}
+                   'response_size', 'session_data_type', 'required_field', 'transport',
+                   'application_rejection', 'refresh_code_missing', 'refresh_code_type',
+                   'refresh_code_string_success'}
     validations.update(prefix + key for prefix in ('missing_', 'invalid_') for key in SESSION_FIELDS)
     status = exc.status
     return {'result': 'failed', 'vendor_code': exc.code if exc.code in SAFE_CODES else 'UNKNOWN',
+            'error_category': refresh_error_category(exc),
             'http_category': (str(status // 100) + 'xx' if type(status) is int and 100 <= status <= 599 else 'unavailable'),
             'validation': exc.validation if exc.validation in validations else 'response_validation'}
+
+
+def refresh_error_category(exc):
+    """Evidence categories, separate from response field validation details."""
+    if exc.status in (401, 403) or exc.code in {
+            '401', '403', '2062', '100001', '100003', '100004', '100005',
+            'invalid_grant', 'access_denied', 'invalid_client'}:
+        return 'auth_rejection'
+    if exc.validation == 'transport':
+        return 'transport'
+    if exc.validation == 'http_status':
+        return 'http_error'
+    if exc.validation == 'application_rejection':
+        return 'application_rejection'
+    if exc.validation == 'json_decode':
+        return 'json_decode'
+    return 'response_validation'
 
 
 def required(data, key):
@@ -392,7 +425,15 @@ class Client:
             except (KeyError, TypeError):
                 raise APIError('Nieprawidłowa odpowiedź logowania OA.') from None
         else:
-            if result.get('code') != 200:
+            if result.get('code') != 200 or (path == REFRESH and type(result.get('code')) is not int):
+                if path == REFRESH:
+                    value = result.get('code')
+                    validation = ('refresh_code_missing' if 'code' not in result else
+                                  'refresh_code_type' if type(value) not in (int, str) else
+                                  'refresh_code_string_success' if value == '200' else
+                                  'application_rejection')
+                    raise APIError('API odrzuciło odnowienie sesji.', code=code,
+                                   validation=validation)
                 raise APIError('API odrzuciło żądanie.', code=code)
             data = result.get('data')
             if path == REGION_PATH and required(data, 'oaApiGatewayEndpoint') != OA:
@@ -555,9 +596,10 @@ class Client:
     def refresh_iot_token_sync(self):
         self.refresh_diagnostics = {'result': 'started'}
         try:
-            result = self.signed(IOT, REFRESH, {
+            # OpenAccount checkOrRefreshSession requires params.request.
+            result = self.signed(IOT, REFRESH, {'request': {
                 'refreshToken': required(self.session, 'refresh_token'),
-                'identityId': required(self.session, 'identity_id')}, '1.0.4')
+                'identityId': required(self.session, 'identity_id')}}, '1.0.4')
             self.refresh_diagnostics = session_shape(result)
             status = getattr(result, 'status', None)
             self.refresh_diagnostics['http_category'] = (str(status // 100) + 'xx'
@@ -565,8 +607,18 @@ class Client:
             self.refresh_diagnostics['vendor_code'] = safe_code(result)
             self.accept_session(result.get('data'), refresh=True)
             self.refresh_diagnostics['result'] = 'success'
+            self.refresh_diagnostics['error_category'] = 'none'
         except APIError as exc:
-            self.refresh_diagnostics.update(safe_refresh_error(exc))
+            failure = safe_refresh_error(exc)
+            # Local session validation has no response code/status of its own.
+            for key in ('vendor_code', 'http_category'):
+                if failure[key] in {'UNKNOWN', 'unavailable'} and key in self.refresh_diagnostics:
+                    failure.pop(key)
+            self.refresh_diagnostics.update(failure)
+            if (self.refresh_diagnostics.get('code_category') == 'success'
+                    and failure['error_category'] == 'response_validation'
+                    and exc.validation != 'refresh_code_string_success'):
+                self.refresh_diagnostics['error_category'] = 'malformed_success'
             raise
 
     def devices(self):

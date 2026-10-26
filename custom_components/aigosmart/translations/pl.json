@@ -68,6 +68,11 @@
           "2": "Podgrzewanie i podtrzymywanie ciepła"
         }
       }
+    },
+    "button": {
+      "refresh_iot_token": {
+        "name": "Odśwież token IoT"
+      }
     }
   }
 }

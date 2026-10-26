@@ -16,7 +16,7 @@ from .recovery import RecoveryError, RenewalRequired, failure, recovered
 
 def transient(exc):
     return (isinstance(exc, (OSError, TimeoutError)) or isinstance(exc, APIError)
-            and not is_auth_error(exc) and ((exc.status is None and exc.validation == "response_validation") or exc.status == 429
+            and not is_auth_error(exc) and ((exc.status is None and exc.validation in {"response_validation", "transport"}) or exc.status == 429
                 or exc.status is not None and exc.status >= 500 or exc.code in {'429', '500', '502', '503'}))
 
 
@@ -34,6 +34,7 @@ class SessionManager:
         self._closed = False
         self._login_lock = asyncio.Lock()
         self._login_active = False
+        self._manual_retry_at = 0
         self._read_retry_at = 0
         self._read_failure_cycles = 0
         self._read_failure = ("property_read", "cloud_unavailable")
@@ -54,34 +55,53 @@ class SessionManager:
             self.on_change()
             raise ConfigEntryAuthFailed('Session renewal requires reauthentication')
 
-    async def ensure(self, *, rejected_token=None):
+    async def manual_force_refresh(self):
+        """Force renewal, sharing rotation but never suppressing its failures."""
+        await self.ensure(_manual=True)
+
+    @property
+    def manual_refresh_available(self):
+        """Availability depends on renewal credentials, not kettle connectivity."""
+        s = self.client.session
+        return (not self._closed and not self._login_active
+                and self.status != 'reauth_required'
+                and bool(s.get('refresh_token')) and bool(s.get('identity_id'))
+                and (timestamp(s.get('refresh_token_expires_at')) or 0) > time.time())
+
+    async def ensure(self, *, rejected_token=None, _manual=False, _trigger='proactive'):
         if self._closed:
             raise APIError('Session manager stopped')
         if self._login_active:
             raise RecoveryError('token_refresh', 'response_validation', cooldown=True)
         if self._task is not None:
-            return await self._await_refresh(self._task, rejected_token)
+            if _manual:
+                self._manual_retry_at = time.monotonic() + 60
+            return await self._await_refresh(self._task, rejected_token, strict=_manual)
         self.require_credentials()
+        if _manual and time.monotonic() < self._manual_retry_at:
+            raise RecoveryError('token_refresh', 'response_validation', cooldown=True)
         if rejected_token is not None and rejected_token != self.client.token:
             return
-        if rejected_token is None and time.time() < self.refresh_at:
+        if not _manual and rejected_token is None and time.time() < self.refresh_at:
             return
         if time.time() < self._retry_at:
-            if rejected_token is None and self._token_valid():
+            if not _manual and rejected_token is None and self._token_valid():
                 return
             raise RecoveryError('token_refresh', self._retry_reason, cooldown=True)
-        self._task = self.hass.async_create_task(self._refresh())
+        if _manual:
+            self._manual_retry_at = time.monotonic() + 60
+        self._task = self.hass.async_create_task(self._refresh(trigger='manual' if _manual else 'rejected_token' if rejected_token is not None else _trigger))
         self._task.add_done_callback(self._refresh_done)
         # A cancelled waiter must not cancel an in-flight rotating refresh.
-        await self._await_refresh(self._task, rejected_token)
+        await self._await_refresh(self._task, rejected_token, strict=_manual)
 
-    async def _await_refresh(self, task, rejected_token):
+    async def _await_refresh(self, task, rejected_token, *, strict=False):
         try:
             await asyncio.shield(task)
         except RecoveryError:
             # A failed proactive renewal does not invalidate the current token.
             # A rejected token never takes this path.
-            if rejected_token is not None or not self._token_valid():
+            if strict or rejected_token is not None or not self._token_valid():
                 raise
 
     def _token_valid(self):
@@ -94,7 +114,7 @@ class SessionManager:
         if not task.cancelled():
             task.exception()
 
-    async def _refresh(self):
+    async def _refresh(self, *, trigger='proactive'):
         try:
             for attempt, delay in enumerate((0, 1, 3)):
                 if delay:
@@ -102,6 +122,8 @@ class SessionManager:
                 self.diagnostics.refresh_started()
                 try:
                     await self.hass.async_add_executor_job(self.client.refresh_iot_token_sync)
+                    if isinstance(self.client.refresh_diagnostics, dict):
+                        self.client.refresh_diagnostics['trigger'] = trigger
                     # Persist the complete rotated session before exposing success.
                     self.hass.config_entries.async_update_entry(self.entry,
                         data={**self.entry.data, **self.client.session})
@@ -113,6 +135,8 @@ class SessionManager:
                     self.diagnostics.last_refresh_result = 'success'
                     return
                 except Exception as exc:
+                    if isinstance(self.client.refresh_diagnostics, dict):
+                        self.client.refresh_diagnostics['trigger'] = trigger
                     self.diagnostics.refresh_failed(exc)
                     reason = failure('token_refresh', exc, details=self.client.refresh_diagnostics)
                     if is_auth_error(exc):
@@ -204,7 +228,7 @@ class SessionManager:
     async def _timer(self, _now):
         self._cancel_timer = None
         try:
-            await self.ensure()
+            await self.ensure(_trigger='timer')
         except ConfigEntryAuthFailed:
             self.entry.async_start_reauth(self.hass)
         except APIError:

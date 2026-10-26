@@ -68,6 +68,11 @@
           "2": "Erwärmen und warmhalten"
         }
       }
+    },
+    "button": {
+      "refresh_iot_token": {
+        "name": "IoT-Token erneuern"
+      }
     }
   }
 }

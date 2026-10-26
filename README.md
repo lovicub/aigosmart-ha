@@ -1,7 +1,7 @@
 # AigoSmart HA
 
 Native Home Assistant integration for AigoSmart kettles using the AigoSmart /
-Alibaba IoT cloud API. Version **0.1.4-beta.6**, opt-in beta based on stable **v0.1.3**.
+Alibaba IoT cloud API. Version **0.1.4-beta.7**, opt-in beta based on stable **v0.1.3**.
 
 Includes **AigoSmart HA Integrated**, a bundled Premium dashboard card, installed
 and updated with this integration. No second HACS frontend installation is needed.
@@ -9,11 +9,20 @@ The separately installed [AigoSmart Premium Card](https://github.com/lovicub/aig
 remains supported under its original name and resource URL; both can coexist.
 <img width="1986" height="1242" alt="image" src="https://github.com/user-attachments/assets/41df2fe4-09f4-41ee-a909-ca9b675c9370" />
 
-This recovery and diagnostics beta preserves usable sessions during proactive
-refresh failures, limits repeated warnings, and records safe refresh response
-shapes. The reported 12–24 hour failure is **not yet confirmed fixed**. See the
-[source comparison, findings, limitations and diagnostic instructions](docs/SESSION_REFRESH_BETA4.md).
-No password is stored; provider-rejected renewal may require HA reauthentication.
+This opt-in beta fixes the Alibaba `/account/checkOrRefreshSession` wire body:
+refresh credentials are nested in `params.request`, retaining API version 1.0.4.
+One real manual refresh succeeded on 2026-10-26 after the user installed the issue
+#12 local build: tokens rotated, expiries advanced, and cloud/device reads worked.
+**Automatic timer refresh with this fix, including a 20-hour run, is not yet proven.**
+Earlier beta.6 rejected 21 automatic attempts and one early manual test.
+
+Enable diagnostics to expose the diagnostic manual refresh button. Safe response
+shape diagnostics distinguish `application_rejection` without retaining token
+values, passwords or raw server bodies. Expiry/rotation persistence, bounded retry
+cooldowns, valid-session preservation and one-attempt device writes are retained.
+The bundled integration card and English/German/Polish translations are preserved.
+Rollback by selecting stable v0.1.3 or beta.6 in HACS Redownload; beta.6 does not
+contain this refresh fix. See [beta.7 notes](docs/RELEASE_BETA7.md).
 
 ## Features
 
