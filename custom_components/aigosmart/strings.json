@@ -50,5 +50,29 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "mode_description": {
+        "name": "Mode description"
+      },
+      "status_description": {
+        "name": "Status description"
+      }
+    },
+    "select": {
+      "mode": {
+        "state": {
+          "0": "One-click boil",
+          "1": "Boil and keep warm",
+          "2": "Heating and keep warm"
+        }
+      }
+    },
+    "button": {
+      "refresh_iot_token": {
+        "name": "Refresh IoT Token"
+      }
+    }
   }
 }

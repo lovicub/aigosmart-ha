@@ -122,6 +122,7 @@ class APIError(Exception):
         self.content_type = '-'
         self.validation = validation
         self.diagnostics = None
+        self.session_diagnostics = None
 
 
 class NeedSecurityCodeError(APIError):
@@ -158,6 +159,7 @@ def decode_response(response, *, allow_empty=False, metadata=None):
                        exception=safe_exception(exc), validation='json_decode') from None
     if metadata is not None:
         metadata['diagnostics'] = response_diagnostics(result)
+        metadata['session_diagnostics'] = session_shape(result)
     if not isinstance(result, dict):
         raise APIError('Nieprawidłowy format odpowiedzi API.', validation='json_object')
     return result
@@ -198,11 +200,13 @@ def transport(method, url, headers, body):
         failure = error('API odrzuciło żądanie.', status=status, code=code,
                         exception='HTTPError', validation='http_status')
         failure.diagnostics = metadata.get('diagnostics')
+        failure.session_diagnostics = metadata.get('session_diagnostics')
         failure.response_length = metadata.get('response_length')
         failure.content_type = metadata.get('content_type', '-')
         raise failure from None
     except APIError as exc:
         exc.diagnostics = metadata.get('diagnostics')
+        exc.session_diagnostics = metadata.get('session_diagnostics')
         if exc.status is None:
             exc.status = status
         exc.response_length = metadata.get('response_length')
@@ -210,7 +214,7 @@ def transport(method, url, headers, body):
         raise
     except Exception as exc:
         raise APIError('Błąd połączenia lub formatu odpowiedzi API.',
-                       status=status, exception=safe_exception(exc)) from None
+                       status=status, exception=safe_exception(exc), validation='transport') from None
 
 
 def encrypt_password(password):
@@ -222,10 +226,86 @@ def encrypt_password(password):
     return base64.b64encode(encryptor.update(padded) + encryptor.finalize()).decode()
 
 
+SESSION_FIELDS = ('iotToken', 'refreshToken', 'identityId', 'iotTokenExpire', 'refreshTokenExpire')
+
+
+def session_shape(result):
+    """Project only fixed field names and types; never retain vendor values."""
+    kinds = {str: 'string', int: 'integer', float: 'number', bool: 'boolean',
+             dict: 'object', list: 'array', type(None): 'null'}
+    data = result.get('data') if isinstance(result, dict) else None
+    fields = {}
+    for key in SESSION_FIELDS:
+        fields[key] = (kinds.get(type(data[key]), 'other')
+                       if isinstance(data, dict) and key in data else 'missing')
+    def expiry_kind(key):
+        if fields[key] == 'missing':
+            return 'missing'
+        value = data[key]
+        if type(value) not in (str, int, float):
+            return 'invalid_type'
+        try:
+            number = float(value)
+        except (ValueError, OverflowError):
+            return 'invalid_numeric'
+        if not math.isfinite(number) or number <= 0:
+            return 'invalid_numeric'
+        return 'duration_seconds'
+    root = {}
+    for key in ('code', 'status', 'success', 'ok', 'message', 'error', 'error_description'):
+        root[key] = (kinds.get(type(result[key]), 'other')
+                     if isinstance(result, dict) and key in result else 'missing')
+    # Fixed classifications only; never retain message contents or unknown codes.
+    code = response_diagnostics(result)
+    return {'root_fields': root,
+            'code_type': code['code_type'],
+            'message_state': 'present' if isinstance(result, dict) and 'message' in result else 'absent',
+            'code_category': code['code_category'],
+            'vendor_code': safe_code(result),
+            'data_state': ('absent' if isinstance(result, dict) and 'data' not in result
+                           else 'null' if data is None else 'object' if isinstance(data, dict) else 'invalid'),
+            'envelope': 'object' if isinstance(result, dict) else kinds.get(type(result), 'other'),
+            'data_type': kinds.get(type(data), 'other'), 'fields': fields,
+            'expiry_representation': {
+                key: expiry_kind(key)
+                for key in ('iotTokenExpire', 'refreshTokenExpire')}}
+
+
+def safe_refresh_error(exc):
+    validations = {'response_validation', 'http_status', 'json_decode', 'json_object',
+                   'response_size', 'session_data_type', 'required_field', 'transport',
+                   'application_rejection', 'refresh_code_missing', 'refresh_code_type',
+                   'refresh_code_string_success'}
+    validations.update(prefix + key for prefix in ('missing_', 'invalid_') for key in SESSION_FIELDS)
+    status = exc.status
+    return {'result': 'failed', 'vendor_code': exc.code if exc.code in SAFE_CODES else 'UNKNOWN',
+            'error_category': refresh_error_category(exc),
+            'http_category': (str(status // 100) + 'xx' if type(status) is int and 100 <= status <= 599 else 'unavailable'),
+            'validation': exc.validation if exc.validation in validations else 'response_validation'}
+
+
+def refresh_error_category(exc):
+    """Evidence categories, separate from response field validation details."""
+    if exc.status in (401, 403) or exc.code in {
+            '401', '403', '2062', '100001', '100003', '100004', '100005',
+            'invalid_grant', 'access_denied', 'invalid_client'}:
+        return 'auth_rejection'
+    if exc.validation == 'transport':
+        return 'transport'
+    if exc.validation == 'http_status':
+        return 'http_error'
+    if exc.validation == 'application_rejection':
+        return 'application_rejection'
+    if exc.validation == 'json_decode':
+        return 'json_decode'
+    return 'response_validation'
+
+
 def required(data, key):
     value = data.get(key) if isinstance(data, dict) else None
     if not isinstance(value, str) or not value:
-        raise APIError('Brak wymaganego pola odpowiedzi API.')
+        raise APIError('Brak wymaganego pola odpowiedzi API.',
+                       validation='missing_' + key if key in SESSION_FIELDS else 'required_field')
     return value
 
 
@@ -235,6 +315,7 @@ class Client:
         self.debug = debug
         self.token = None
         self.session = {}
+        self.refresh_diagnostics = None
 
     def authorize_property_write(self, method, url, body):
         """Read-only clients never authorize writes."""
@@ -272,6 +353,8 @@ class Client:
             # Successful OAuth "code" is an authorization credential.
             if parts.path == AUTHORIZE and isinstance(result, dict) and not result.get('error'):
                 code = 'UNKNOWN'
+            if parts.path == REFRESH:
+                self.refresh_diagnostics = session_shape(result)
             self.validate_response(parts.path, result)
             validation = 'passed'
             return result
@@ -279,6 +362,11 @@ class Client:
             exception = safe_exception(exc)
             if isinstance(exc, APIError):
                 validation = exc.validation
+                if parts.path == REFRESH:
+                    if exc.status is None:
+                        exc.status = status
+                    if exc.session_diagnostics is not None:
+                        self.refresh_diagnostics = exc.session_diagnostics
                 if exc.diagnostics is not None:
                     diagnostics = exc.diagnostics
                 response_length = exc.response_length if exc.response_length is not None else response_length
@@ -337,7 +425,15 @@ class Client:
             except (KeyError, TypeError):
                 raise APIError('Nieprawidłowa odpowiedź logowania OA.') from None
         else:
-            if result.get('code') != 200:
+            if result.get('code') != 200 or (path == REFRESH and type(result.get('code')) is not int):
+                if path == REFRESH:
+                    value = result.get('code')
+                    validation = ('refresh_code_missing' if 'code' not in result else
+                                  'refresh_code_type' if type(value) not in (int, str) else
+                                  'refresh_code_string_success' if value == '200' else
+                                  'application_rejection')
+                    raise APIError('API odrzuciło odnowienie sesji.', code=code,
+                                   validation=validation)
                 raise APIError('API odrzuciło żądanie.', code=code)
             data = result.get('data')
             if path == REGION_PATH and required(data, 'oaApiGatewayEndpoint') != OA:
@@ -460,6 +556,8 @@ class Client:
 
     def accept_session(self, data, *, refresh=False):
         """API expiry fields are durations in seconds, never absolute timestamps."""
+        if not isinstance(data, dict):
+            raise APIError('Invalid session object', validation='session_data_type')
         now = time.time()
         previous = self.session if refresh else {}
         session = dict(previous)
@@ -473,15 +571,15 @@ class Client:
             if wire not in data:
                 if not refresh or wire == 'iotTokenExpire' or (refresh and 'refreshToken' in data
                         and data['refreshToken'] != previous.get('refresh_token')):
-                    raise APIError('Missing session lifetime')
+                    raise APIError('Missing session lifetime', validation='missing_' + wire)
                 continue
             value = data[wire]
             try:
                 ttl = float(value) if not isinstance(value, bool) else float('nan')
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, OverflowError):
                 ttl = float('nan')
-            if not math.isfinite(ttl) or ttl <= 0:
-                raise APIError('Invalid session lifetime')
+            if not math.isfinite(ttl) or ttl <= 0 or now + ttl >= 253402300799:
+                raise APIError('Invalid session lifetime', validation='invalid_' + wire)
             session[local + '_ttl'] = ttl
             session[local + '_expires_at'] = now + ttl
         if refresh:
@@ -496,10 +594,32 @@ class Client:
         self.token = self.session.get('iot_token')
 
     def refresh_iot_token_sync(self):
-        result = self.signed(IOT, REFRESH, {
-            'refreshToken': required(self.session, 'refresh_token'),
-            'identityId': required(self.session, 'identity_id')}, '1.0.4')
-        self.accept_session(result.get('data'), refresh=True)
+        self.refresh_diagnostics = {'result': 'started'}
+        try:
+            # OpenAccount checkOrRefreshSession requires params.request.
+            result = self.signed(IOT, REFRESH, {'request': {
+                'refreshToken': required(self.session, 'refresh_token'),
+                'identityId': required(self.session, 'identity_id')}}, '1.0.4')
+            self.refresh_diagnostics = session_shape(result)
+            status = getattr(result, 'status', None)
+            self.refresh_diagnostics['http_category'] = (str(status // 100) + 'xx'
+                if type(status) is int and 100 <= status <= 599 else 'unavailable')
+            self.refresh_diagnostics['vendor_code'] = safe_code(result)
+            self.accept_session(result.get('data'), refresh=True)
+            self.refresh_diagnostics['result'] = 'success'
+            self.refresh_diagnostics['error_category'] = 'none'
+        except APIError as exc:
+            failure = safe_refresh_error(exc)
+            # Local session validation has no response code/status of its own.
+            for key in ('vendor_code', 'http_category'):
+                if failure[key] in {'UNKNOWN', 'unavailable'} and key in self.refresh_diagnostics:
+                    failure.pop(key)
+            self.refresh_diagnostics.update(failure)
+            if (self.refresh_diagnostics.get('code_category') == 'success'
+                    and failure['error_category'] == 'response_validation'
+                    and exc.validation != 'refresh_code_string_success'):
+                self.refresh_diagnostics['error_category'] = 'malformed_success'
+            raise
 
     def devices(self):
         devices = []

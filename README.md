@@ -1,21 +1,32 @@
 # AigoSmart HA
 
 Native Home Assistant integration for AigoSmart kettles using the AigoSmart /
-Alibaba IoT cloud API. Version **0.1.2**, development status.
+Alibaba IoT cloud API. Version **0.1.4**.
 
-Optional dashboard companion: [AigoSmart Premium Card](https://github.com/lovicub/aigosmart-premium-card).
-The integration works independently; the card has its own installation and configuration.
+Includes **AigoSmart HA Integrated**, a bundled Premium dashboard card, installed
+and updated with this integration. No second HACS frontend installation is needed.
+The separately installed [AigoSmart Premium Card](https://github.com/lovicub/aigosmart-premium-card)
+remains supported under its original name and resource URL; both can coexist.
 <img width="1986" height="1242" alt="image" src="https://github.com/user-attachments/assets/41df2fe4-09f4-41ee-a909-ca9b675c9370" />
 
 <img width="364" height="646" alt="image" src="https://github.com/user-attachments/assets/5e33097f-9206-4ab8-9ed6-ae27de4faccf" />
 
 <img width="372" height="608" alt="image" src="https://github.com/user-attachments/assets/e02ade11-472b-4570-a787-f5dcfa67bdaf" />
 
+Stable v0.1.4 bundles the integrated smart-kettle dashboard card and fixes automatic
+Alibaba IoT session renewal: `/account/checkOrRefreshSession` uses `params.request`
+at API version 1.0.4. Owner-reported Home Assistant evidence on 2026-10-27 confirmed
+automatic recovery after a rejected token, followed by successful cloud/device
+reads. Scheduled proactive renewal before expiry has not been separately verified.
+Token rotation/expiry persistence, bounded retries and one-attempt device controls
+are preserved; heating commands are never replayed. See [changelog](CHANGELOG.md).
+
+
 ## Features
 
 - UI account setup with email security-code verification and reauthentication.
 - Automatic session refresh using API TTLs, with persisted rotating refresh tokens.
-- Three optional diagnostic sensors, disabled by default.
+- Passive connection/session diagnostics, disabled by default.
 - Heating ON/OFF using the `HeatingSwitch` switch.
 - Target temperature: 0–100 °C using a number entity.
 - Operating mode selection: 0, 1 or 2, with TSL labels in `mode_labels`.
@@ -65,8 +76,6 @@ hardware certification. Confirm the TSL on your own model before relying on cont
 If you successfully test the integration with another model or firmware version, please open a GitHub issue so I can update the compatibility list.
 
 ## Installation via HACS
-
-After this repository is published:
 
 1. Open HACS → Custom repositories.
 2. Add `https://github.com/lovicub/aigosmart-ha`, category **Integration**.
@@ -193,6 +202,151 @@ explicitly request the verification email and enter its code. Use the original
 account containing the original kettle. Success updates the current entry and
 reloads it, preserving entities, areas, options, dashboards and history.
 
-Cloud outages remain retryable. Confirmed rejected credentials trigger the same
-reauthentication flow automatically. Long-term live recovery has not yet been
-verified. Never remove the integration to renew its credentials.
+Cloud outages remain retryable. Rejected IoT tokens trigger automatic refresh;
+rejected refresh credentials trigger reauthentication. Automatic rejected-token
+refresh recovery was confirmed on 2026-10-27. Never remove the integration to
+renew its credentials.
+
+
+### Integrated card and session diagnostics (v0.1.4)
+
+The bundled card is available natively after installing the integration and
+restarting Home Assistant. Existing entity IDs and automations remain unchanged.
+For HACS updates, use **Update information** and download the current main version;
+this code update does not create a new tagged HACS release. For manual installation,
+copy the complete integration directory from main as described above.
+
+Diagnostic entities remain disabled by default. Existing diagnostic sensor unique
+IDs are preserved; runtime counters/history reset on reload/restart.
+
+Enable selected diagnostic entities under **Settings → Devices & services →
+Entities** (include disabled entities), or download diagnostics from the AigoSmart
+integration entry menu. See [diagnostic definitions and beta limits](docs/BETA_DIAGNOSTICS.md).
+Automatic rejected-token recovery was confirmed by the owner on 2026-10-27.
+Scheduled proactive renewal before expiry remains separately unverified.
+
+
+### Enum labels and stable automation values (issue #3)
+
+Existing `ModeSelect` and `status` sensor unique IDs, entity IDs and raw values
+are unchanged. Mode services still take the current numeric-string options
+(`"0"`, `"1"`, `"2"` on the tested model), never a human label. Existing numeric
+status triggers keep working. The select retains `mode_labels` and adds
+`current_mode_label`; the existing status sensor adds `status_labels` and
+`status_label` attributes. New **Mode description** and **Status description**
+sensors show readable device-provided TSL descriptions, without extra polling.
+Their entity names are translated in English, German and Polish; their values
+use the device's own TSL language.
+
+| Property | Raw value | Tested kettle meaning |
+| --- | --- | --- |
+| Mode | 0 | One-click boil |
+| Mode | 1 | Boil and keep warm |
+| Mode | 2 | Heating and keep warm |
+| status | 1 | Standby (the available TSL fixture says `Stand by`) |
+| status | 2 | Heating |
+| status | 3 | Cooling |
+| status | 4 | Keeping warm |
+
+These mappings are confirmed by the issue report and represented in our existing
+**synthetic** TSL fixture; no live API was queried for this release. Runtime TSL
+descriptions take precedence. Other models can expose different labels/values.
+Missing or unknown numeric values are described as `Unknown (value)` rather than
+assigned a guessed meaning; unavailable/non-enum values have no description.
+Unsafe or overlong TSL descriptions are discarded.
+
+Native Mode dropdown translations are supported in **HA Core 2026.10.3** with
+its pinned frontend **20260930.5**, including numeric keys. For the complete
+runtime TSL mapping above, the existing select sets `translation_key: mode` and
+HA displays the translated labels directly. English displays **One-click boil**,
+**Boil and keep warm**, **Heating and keep warm**; German and Polish translations
+are also provided. Stored states, `attributes.options`, automation arguments and
+IoT values remain `"0"`/`"1"`/`"2"` (IoT integers).
+
+The opt-in gate requires exactly those three keys and matching English TSL
+meanings (case/spacing and the hyphen in One-click may vary). Missing metadata,
+other meanings, partial mappings or additional values disable the fixed
+translations. Existing device label attributes and description sensors remain
+unchanged and continue to describe other models. This conservative gate may
+leave numeric dropdown labels on otherwise equivalent models with TSL labels in
+another language; it avoids assigning an unverified meaning.
+
+Numeric key support was confirmed using Core's real translation loader, actual
+registry updates and the unmodified production native select/formatter in a
+headless browser. English/German/Polish menus visibly render translated labels;
+clicks send numeric-string service options. An unmatched-model case falls back
+to raw options. These are isolated fixture tests, not installed-HA verification.
+[Screenshot: English native dropdown](docs/screenshots/native-mode-en.png) ·
+[Screenshot: German native dropdown](docs/screenshots/native-mode-de.png).
+
+After installing v0.1.4, restart HA and refresh the browser/app so it reloads
+registry metadata and translations. Keep the existing entity; do not delete or
+recreate it. If the dropdown remains numeric, inspect `mode_labels`: unmatched
+runtime descriptions deliberately do not enable fixed translations.
+
+The optional Premium Card **v0.1.1-beta.1** remains compatible with integration
+**v0.1.4**. Keep existing mappings pointing to the original raw status sensor and
+Mode select. Additional description sensors are optional; the card ignores
+these and diagnostic sensors during automatic detection. Numeric and labeled
+select options are supported; the card sends an option actually offered by HA.
+No entity ID or configuration schema migration is required from v0.1.3.
+
+## Bundled dashboard card (v0.1.4)
+
+HACS includes the frontend directory automatically with the integration. Restart
+HA after installing/updating. In Lovelace **resource storage mode**, the integration
+registers only its own versioned module resource after loading HA's resource
+collection. It does not create cards or edit dashboards. Add **AigoSmart HA
+Integrated** from the card picker, or use this YAML with your existing entity IDs:
+
+```yaml
+type: custom:aigosmart-ha-integrated-card
+name: Kitchen kettle
+power_entity: switch.kettle
+target_entity: number.kettle_target
+mode_entity: select.kettle_mode
+status_entity: sensor.kettle_status
+keep_warm_entity: number.kettle_warm
+time_entity: sensor.kettle_time
+confirm_start: true
+```
+
+For **YAML resource mode**, merge this resource into your existing configuration;
+no resources are automatically changed in YAML mode:
+
+```yaml
+lovelace:
+  resource_mode: yaml
+  resources:
+    - url: /aigosmart-ha-integrated/aigosmart-ha-integrated-card.js?v=0.1.4-card-0.1.1-beta.1
+      type: module
+```
+
+Existing standalone card users: **no migration required**. Keep your separate HACS
+frontend installation or manual resource and all existing dashboard YAML unchanged:
+
+```yaml
+type: custom:aigosmart-premium-card
+name: Kitchen kettle
+power_entity: switch.kettle
+target_entity: number.kettle_target
+mode_entity: select.kettle_mode
+```
+
+Both types work on the same dashboard. The integration never renames the old
+element, changes its resource, or replaces stored cards. You may optionally copy a
+card and change only its type to try the integrated version; retain your explicit
+entity settings and confirmation preferences. Numeric Mode options and entity IDs
+are unchanged. The integrated footer reads “AigoSmart HA Integrated”.
+
+If the new element is unavailable, restart HA, check the sanitized integration log,
+and reload the browser with cache cleared. Check Settings → Dashboards → Resources
+(advanced mode) for the integrated URL above, alongside any standalone resource.
+Do not remove the standalone resource while old cards use it. After future updates,
+YAML users update the version query themselves. Headless/frontend failures do not
+prevent device integration setup. Resources remain on entry unload and are reused
+on reload/restart; no dashboard is modified.
+
+The bundled snapshot is pinned to card v0.1.1-beta.1, commit
+`f4bb918d261d63a49ed40f27c194b5f8be555e8d`, under the original MIT license.
+See [vendor provenance and offline validation](docs/INTEGRATED_CARD_BETA5.md).

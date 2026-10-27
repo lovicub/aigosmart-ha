@@ -79,3 +79,16 @@ Refresh diagnostics and exceptions use fixed messages/sanitized error codes.
 Offline tests assert tokens/identity IDs are absent from debug logs and entity
 attributes. Writes remain single-attempt; refresh and read retries cannot invoke
 the write path. No credentials were sent to any API for v0.1.2 verification.
+
+
+## v0.1.4-beta.4 recovery review — 2026-10-25
+
+Refresh diagnostics project only fixed field names/types, expiry representation
+categories, reviewed validation labels, HTTP status class and SAFE_CODES literals.
+Server values, arbitrary keys, identities, headers, response bodies and exception
+messages never enter this projection. Offline injection tests include secrets in
+field names, field values, response envelopes and HTTP error bodies. Recovery
+logging uses only these projections and fixed categories. No new password/code
+storage or automatic email sending is added. Existing config entries retain the
+same session-only credential model. Tests and build do not contact real accounts
+or devices. Both MIT reference implementations are reviewed without copying code.

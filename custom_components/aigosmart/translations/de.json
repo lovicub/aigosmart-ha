@@ -50,5 +50,29 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "mode_description": {
+        "name": "Modusbeschreibung"
+      },
+      "status_description": {
+        "name": "Statusbeschreibung"
+      }
+    },
+    "select": {
+      "mode": {
+        "state": {
+          "0": "Ein-Klick-Kochen",
+          "1": "Kochen und warmhalten",
+          "2": "Erwärmen und warmhalten"
+        }
+      }
+    },
+    "button": {
+      "refresh_iot_token": {
+        "name": "IoT-Token erneuern"
+      }
+    }
   }
 }

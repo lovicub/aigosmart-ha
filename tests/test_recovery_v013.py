@@ -79,6 +79,7 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
         flow.client.send_security_code.assert_not_called()
 
     async def test_wrong_kettle_cannot_replace_session(self):
+        self.entry.runtime_data = None
         flow = AigoFlow(); flow.hass = self.hass; flow.context = {'source': 'reauth'}
         flow.client = Mock(); flow.client.devices.return_value = [{'iotId': 'different'}]
         flow.credentials = {'email': 'private@example.test', 'password': 'SECRET'}
@@ -90,7 +91,9 @@ class RecoveryTests(unittest.IsolatedAsyncioTestCase):
     async def test_login_rejection_and_outage_leave_entry_unchanged(self):
         for exc, expected in ((APIError('SECRET', status=401), 'invalid_auth'),
                               (APIError('SECRET', status=503), 'cannot_connect')):
+            self.entry.runtime_data = None
             flow = AigoFlow(); flow.hass = self.hass; flow.context = {'source': 'reauth'}
+            flow._get_reauth_entry = Mock(return_value=self.entry)
             flow.client = Mock(); flow.client.login_with_code.side_effect = exc
             old = dict(self.entry.data)
             flow.async_update_reload_and_abort = Mock()
@@ -158,6 +161,7 @@ class SetupRecoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(self.coordinator.last_update_success)
         self.entry.async_start_reauth.assert_not_called()
         self.client.properties.side_effect = None
+        self.coordinator.session._read_retry_at = 0
         await self.coordinator.async_refresh()
         self.assertTrue(self.coordinator.last_update_success)
         self.client.devices.return_value = []

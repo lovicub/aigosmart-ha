@@ -43,7 +43,7 @@ class ProtocolTests(unittest.TestCase):
         c = AigoClient(Mock())
         c.accept_session(response())
         old = dict(c.session)
-        for value in (None, 0, -1, True, 'secret', float('inf'), 'nan'):
+        for value in (None, 0, -1, True, 'secret', float('inf'), 'nan', 1e100, 10**1000):
             with self.subTest(value=value), self.assertRaises(p.APIError):
                 c.accept_session(response(iotToken='ROTATED', iotTokenExpire=value), refresh=True)
             self.assertEqual(c.session, old)
@@ -56,7 +56,7 @@ class ProtocolTests(unittest.TestCase):
         c.refresh_iot_token_sync()
         body = json.loads(send.call_args.args[3])
         self.assertEqual(send.call_args.args[1], p.IOT + p.REFRESH)
-        self.assertEqual(body['params'], {'refreshToken': 'OLD_REFRESH', 'identityId': 'IDENTITY_SECRET'})
+        self.assertEqual(body['params'], {'request': {'refreshToken': 'OLD_REFRESH', 'identityId': 'IDENTITY_SECRET'}})
         self.assertEqual(body['request']['apiVer'], '1.0.4')
         self.assertNotIn('iotToken', body['request'])
         self.assertEqual(c.session['refresh_token'], 'NEW_REFRESH_SECRET')
@@ -164,7 +164,10 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
         with patch('custom_components.aigosmart.session.asyncio.sleep', new=AsyncMock()) as sleep:
             with self.assertRaises(p.APIError):
                 await self.manager.ensure()
-            self.assertEqual([c.args[0] for c in sleep.await_args_list if c.args[0]], [1, 3])
+            delays = [c.args[0] for c in sleep.await_args_list if c.args[0]]
+            self.assertEqual(len(delays), 2)
+            for actual, base in zip(delays, (1, 3)):
+                self.assertTrue(base * .8 <= actual <= base * 1.2)
         self.assertEqual(self.send.call_count, 3)
         self.assertEqual(self.entry.data, old)
         self.assertEqual(self.manager.status, 'refresh_unavailable')
@@ -281,9 +284,10 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
         coordinator = Mock(client=self.client, session=self.manager, device={'iotId': 'PRIVATE_ID'})
         self.entry.runtime_data = coordinator
         data = await async_get_config_entry_diagnostics(self.hass, self.entry)
-        self.assertEqual(set(data), {'authorization_status', 'session_time_remaining', 'last_successful_refresh'})
+        self.assertTrue({'authorization_status', 'session_time_remaining', 'last_successful_refresh'} <= set(data))
         self.assertNotIn('SECRET', json.dumps(data))
-        for key in data:
+        from custom_components.aigosmart.diagnostic_state import SENSOR_NAMES
+        for key in SENSOR_NAMES:
             sensor = AigoSessionSensor(coordinator, key)
             self.assertFalse(sensor.entity_registry_enabled_default)
             self.assertEqual(sensor.entity_category.value, 'diagnostic')

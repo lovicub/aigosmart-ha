@@ -50,5 +50,29 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "mode_description": {
+        "name": "Opis trybu"
+      },
+      "status_description": {
+        "name": "Opis stanu"
+      }
+    },
+    "select": {
+      "mode": {
+        "state": {
+          "0": "Gotowanie jednym przyciskiem",
+          "1": "Gotowanie i podtrzymywanie ciepła",
+          "2": "Podgrzewanie i podtrzymywanie ciepła"
+        }
+      }
+    },
+    "button": {
+      "refresh_iot_token": {
+        "name": "Odśwież token IoT"
+      }
+    }
   }
 }

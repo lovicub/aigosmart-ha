@@ -26,6 +26,15 @@ class AigoFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD))}), errors=errors)
 
     async def _login(self, code=None):
+        runtime = None
+        if self.source == config_entries.SOURCE_REAUTH:
+            runtime = getattr(self._get_reauth_entry(), 'runtime_data', None)
+        if runtime is not None:
+            async with runtime.session.login_guard():
+                return await self._login_guarded(code)
+        return await self._login_guarded(code)
+
+    async def _login_guarded(self, code=None):
         try:
             await self.hass.async_add_executor_job(self.client.login_with_code,
                 self.credentials['email'], self.credentials['password'], code)
