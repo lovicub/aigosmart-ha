@@ -33,9 +33,7 @@ class AigoSensor(AigoEntity, SensorEntity):
 class AigoEnumDescriptionSensor(AigoEntity, SensorEntity):
     """Add readable values without changing existing machine states or IDs."""
     def __init__(self, coordinator, key):
-        super().__init__(coordinator, key)
-        self._attr_name = None
-        self._attr_translation_key = f'{key.lower()}_description'
+        super().__init__(coordinator, key, translation_key=f'{key.lower()}_description')
 
     @property
     def native_value(self):
