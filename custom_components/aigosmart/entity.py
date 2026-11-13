@@ -7,6 +7,7 @@ from .const import DOMAIN
 # an entry keep the raw identifier as their name.
 PROPERTY_TRANSLATION_KEYS = {
     'Target_temperature': 'target_temperature',
+    'temperature': 'water_temperature',
     'heatpreservation': 'heat_preservation',
     'HeatingSwitch': 'heating',
     'Time': 'time',

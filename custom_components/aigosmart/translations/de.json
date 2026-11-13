@@ -62,6 +62,9 @@
       "target_temperature": {
         "name": "Zieltemperatur"
       },
+      "water_temperature": {
+        "name": "Wassertemperatur"
+      },
       "heat_preservation": {
         "name": "Warmhalten"
       },
