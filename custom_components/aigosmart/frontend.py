@@ -1,6 +1,5 @@
 """Optional, local-only Lovelace resource registration for the bundled card."""
 import asyncio
-import json
 import logging
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -9,8 +8,14 @@ _LOGGER = logging.getLogger(__name__)
 _DATA = 'aigosmart_integrated_frontend'
 ASSETS = Path(__file__).parent / 'frontend'
 PATH = '/aigosmart-ha-integrated/aigosmart-ha-integrated-card.js'
-VERSION = json.loads((Path(__file__).parent / 'manifest.json').read_text())['version']
-URL = f'{PATH}?v={VERSION}-card-0.1.1-beta.1'
+CARD_VERSION = 'card-0.1.1-beta.1'
+
+
+async def _async_resource_url(hass):
+    """Cache-busting URL; the version comes from HA's loader, not a file read."""
+    from homeassistant.loader import async_get_integration
+    integration = await async_get_integration(hass, 'aigosmart')
+    return f'{PATH}?v={integration.version}-{CARD_VERSION}'
 
 
 def async_schedule_frontend(hass):
@@ -36,6 +41,7 @@ async def async_register_frontend(hass):
     state = hass.data.setdefault(_DATA, {'lock': asyncio.Lock(), 'static': False})
     async with state['lock']:
         try:
+            resource_url = await _async_resource_url(hass)
             from homeassistant.components.http import StaticPathConfig
             from homeassistant.components.lovelace.const import LOVELACE_DATA
 
@@ -63,9 +69,9 @@ async def async_register_frontend(hass):
             for item in resources.async_items():
                 url = urlsplit(item.get('url', ''))
                 if not url.scheme and not url.netloc and url.path == PATH:
-                    if item['url'] != URL or item.get('type') != 'module':
-                        await resources.async_update_item(item['id'], {'url': URL, 'res_type': 'module'})
+                    if item['url'] != resource_url or item.get('type') != 'module':
+                        await resources.async_update_item(item['id'], {'url': resource_url, 'res_type': 'module'})
                     return
-            await resources.async_create_item({'url': URL, 'res_type': 'module'})
+            await resources.async_create_item({'url': resource_url, 'res_type': 'module'})
         except Exception:
             _LOGGER.warning('Integrated card registration failed; cloud integration remains available')

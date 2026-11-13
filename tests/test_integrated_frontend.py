@@ -9,7 +9,18 @@ from unittest.mock import AsyncMock, Mock, patch
 from custom_components.aigosmart import frontend as f
 
 
+MANIFEST = json.loads((Path(f.__file__).parent / 'manifest.json').read_text(encoding='utf-8'))
+RESOURCE_URL = f'{f.PATH}?v={MANIFEST["version"]}-{f.CARD_VERSION}'
+
+
 class FrontendTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        # The loader resolves the integration version without any file read in the loop.
+        patcher = patch('homeassistant.loader.async_get_integration',
+                        AsyncMock(return_value=SimpleNamespace(version=MANIFEST['version'])))
+        self.get_integration = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def fixture(self, mode='storage', loaded=False):
         items = [{'id': 'old', 'url': '/hacsfiles/aigosmart-premium-card/aigosmart-premium-card.js', 'type': 'module'},
                  {'id': 'other', 'url': '/local/other.js', 'type': 'module'}]
@@ -44,7 +55,7 @@ class FrontendTests(unittest.IsolatedAsyncioTestCase):
         hass.http.async_register_static_paths.assert_awaited_once()
         items[2]['url'] = f.PATH + '?v=old'
         await f.async_register_frontend(hass)
-        r.async_update_item.assert_awaited_once_with('new', {'url': f.URL, 'res_type': 'module'})
+        r.async_update_item.assert_awaited_once_with('new', {'url': RESOURCE_URL, 'res_type': 'module'})
         self.assertEqual(items[:2], original)
         # Device unload must not remove global resources; a fresh HA runtime
         # re-registers the route and loads persisted resources without adding one.
@@ -142,6 +153,23 @@ class FrontendTests(unittest.IsolatedAsyncioTestCase):
                 await f.async_register_frontend(hass)
             self.assertNotIn('PRIVATE_BACKEND_VALUE', str(logs.output))
 
+    async def test_resource_url_uses_loader_version_without_file_read(self):
+        hass, r, items = self.fixture()
+        self.get_integration.return_value = SimpleNamespace(version='9.9.9')
+        with patch.object(Path, 'read_text', side_effect=AssertionError('blocking read')):
+            await f.async_register_frontend(hass)
+        self.get_integration.assert_awaited_once_with(hass, 'aigosmart')
+        self.assertEqual(items[-1]['url'], f'{f.PATH}?v=9.9.9-{f.CARD_VERSION}')
+
+    async def test_loader_failure_fails_closed_without_writes(self):
+        hass, r, items = self.fixture()
+        self.get_integration.side_effect = RuntimeError('PRIVATE_LOADER_VALUE')
+        with self.assertLogs(f.__name__, level='WARNING') as logs:
+            await f.async_register_frontend(hass)
+        self.assertNotIn('PRIVATE_LOADER_VALUE', str(logs.output))
+        r.async_create_item.assert_not_called()
+        r.async_update_item.assert_not_called()
+
     async def test_real_ha_lazy_collection_preserves_existing_storage(self):
         from homeassistant.components.lovelace.resources import ResourceStorageCollection
         with patch('homeassistant.components.lovelace.resources.storage.Store'):
@@ -169,7 +197,7 @@ class VendorTests(unittest.TestCase):
         self.assertEqual(transform((p / 'aigosmart-premium-card.source.js').read_text()),
                          (p / 'aigosmart-ha-integrated-card.js').read_text())
         self.assertIn('Copyright (c) 2026 AigoSmart project contributors', (p / 'LICENSE').read_text())
-        self.assertEqual(f.VERSION, '0.1.4')
+        self.assertEqual(MANIFEST['version'], '0.1.4')
         self.assertNotIn('http', (p / 'aigosmart-ha-integrated-card.js').read_text())
 
     def test_package(self):
@@ -177,7 +205,7 @@ class VendorTests(unittest.TestCase):
         from zipfile import ZipFile
         import sys
         subprocess.run([sys.executable, 'tools/build_zip.py'], check=True, capture_output=True)
-        with ZipFile(f'dist/aigosmart-ha-{f.VERSION}.zip') as archive:
+        with ZipFile(f'dist/aigosmart-ha-{MANIFEST["version"]}.zip') as archive:
             for name in ('aigosmart-ha-integrated-card.js', 'aigosmart-premium-card.source.js', 'LICENSE', 'PROVENANCE.json'):
                 self.assertEqual(archive.read('custom_components/aigosmart/frontend/' + name), (f.ASSETS / name).read_bytes())
             self.assertFalse(any('.storage' in name or '__pycache__' in name for name in archive.namelist()))
