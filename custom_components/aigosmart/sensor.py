@@ -50,8 +50,7 @@ class AigoSessionSensor(AigoEntity, SensorEntity):
     _attr_entity_registry_enabled_default = False
 
     def __init__(self, coordinator, key):
-        super().__init__(coordinator, key)
-        self._attr_name = SENSOR_NAMES[key]
+        super().__init__(coordinator, key, translation_key=key)
         if key in TIMESTAMP_KEYS:
             self._attr_device_class = SensorDeviceClass.TIMESTAMP
 

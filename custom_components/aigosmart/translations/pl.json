@@ -58,6 +58,54 @@
       },
       "status_description": {
         "name": "Opis stanu"
+      },
+      "target_temperature": {
+        "name": "Temperatura docelowa"
+      },
+      "heat_preservation": {
+        "name": "Podtrzymywanie ciepła"
+      },
+      "time": {
+        "name": "Czas"
+      },
+      "status": {
+        "name": "Stan"
+      },
+      "session_time_remaining": {
+        "name": "Pozostały czas sesji"
+      },
+      "last_successful_refresh": {
+        "name": "Ostatnie udane odświeżenie"
+      },
+      "authorization_status": {
+        "name": "Stan autoryzacji"
+      },
+      "last_successful_cloud_read": {
+        "name": "Ostatni udany odczyt z chmury"
+      },
+      "last_successful_device_read": {
+        "name": "Ostatni udany odczyt urządzenia"
+      },
+      "last_failed_api_operation": {
+        "name": "Ostatnia nieudana operacja API"
+      },
+      "last_refresh_attempt": {
+        "name": "Ostatnia próba odświeżenia"
+      },
+      "last_refresh_result": {
+        "name": "Wynik ostatniego odświeżenia"
+      },
+      "failed_refresh_count": {
+        "name": "Liczba nieudanych odświeżeń"
+      },
+      "connection_status": {
+        "name": "Stan połączenia"
+      },
+      "iot_token_expires_at": {
+        "name": "Wygaśnięcie tokenu IoT"
+      },
+      "refresh_token_expires_at": {
+        "name": "Wygaśnięcie tokenu odświeżania"
       }
     },
     "select": {
@@ -66,12 +114,31 @@
           "0": "Gotowanie jednym przyciskiem",
           "1": "Gotowanie i podtrzymywanie ciepła",
           "2": "Podgrzewanie i podtrzymywanie ciepła"
-        }
+        },
+        "name": "Tryb"
       }
     },
     "button": {
       "refresh_iot_token": {
         "name": "Odśwież token IoT"
+      }
+    },
+    "number": {
+      "target_temperature": {
+        "name": "Temperatura docelowa"
+      },
+      "heat_preservation": {
+        "name": "Podtrzymywanie ciepła"
+      }
+    },
+    "binary_sensor": {
+      "heating": {
+        "name": "Grzanie"
+      }
+    },
+    "switch": {
+      "heating": {
+        "name": "Grzanie"
       }
     }
   }

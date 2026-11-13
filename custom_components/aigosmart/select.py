@@ -31,12 +31,11 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 class ModeSelect(AigoEntity, SelectEntity):
     def __init__(self, coordinator, choices):
-        super().__init__(coordinator, 'Mode')
         self.choices = {str(k): str(v) for k,v in choices.items()}
-        self._attr_options = list(self.choices)  # Stored/service/API values stay numeric strings.
-        self._attr_translation_key = (
+        super().__init__(coordinator, 'Mode', translation_key=(
             'mode' if has_known_mode_labels(coordinator.model, self.choices) else None
-        )
+        ))
+        self._attr_options = list(self.choices)  # Stored/service/API values stay numeric strings.
 
     @property
     def current_option(self):
