@@ -21,6 +21,13 @@ class TemperatureNumber(AigoEntity, NumberEntity):
         self._attr_native_step = float(limits['step'])
 
     @property
+    def available(self):
+        # The cloud may not report a declared read-write property until it has been
+        # written once (for example the target temperature). Keep the control usable
+        # while the connection works; writes are still validated against the TSL.
+        return self.coordinator.last_update_success
+
+    @property
     def native_value(self):
         return self.value
 
