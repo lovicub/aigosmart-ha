@@ -32,6 +32,7 @@ are preserved; heating commands are never replayed. See [changelog](CHANGELOG.md
 - Operating mode selection: 0, 1 or 2, with TSL labels in `mode_labels`.
 - Heat preservation: 0–13 hours using a number entity.
 - Monitoring: heating state, status, target temperature, time and heat preservation.
+- Water ready: a `Water ready` binary sensor and a `Water` event entity (`ready`, `interrupted`, `keep_warm_finished`), derived from status, mode, water temperature and target temperature, for models whose TSL declares them.
 - Cloud polling every 15 seconds by default; configurable from 15 to 3600 seconds.
 - Live TSL access/type/range/step validation before writes.
 - One write attempt per action, no automatic retries, followed by confirmation reads.

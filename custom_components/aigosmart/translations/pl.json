@@ -134,11 +134,28 @@
     "binary_sensor": {
       "heating": {
         "name": "Grzanie"
+      },
+      "water_ready": {
+        "name": "Woda gotowa"
       }
     },
     "switch": {
       "heating": {
         "name": "Grzanie"
+      }
+    },
+    "event": {
+      "water": {
+        "name": "Woda",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "ready": "Gotowa",
+              "interrupted": "Przerwano",
+              "keep_warm_finished": "Podtrzymywanie zakończone"
+            }
+          }
+        }
       }
     }
   }

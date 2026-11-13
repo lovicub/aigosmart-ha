@@ -2,11 +2,13 @@
 import asyncio
 from datetime import timedelta
 import logging
+from homeassistant.core import callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from .api import is_auth_error
 from .const import DEFAULT_INTERVAL
 from .session import SessionManager
+from .ready import ReadyTracker
 from .recovery import RecoveryError, failure
 
 class AigoCoordinator(DataUpdateCoordinator):
@@ -21,6 +23,23 @@ class AigoCoordinator(DataUpdateCoordinator):
         self._io_lock = asyncio.Lock()
         self.session = SessionManager(hass, entry, client)
         self.session.on_change = self.async_update_listeners
+        self.ready = ReadyTracker()
+        self._ready_listeners = []
+
+    @callback
+    def async_update_listeners(self):
+        # Derive the kettle events before entities read their state.
+        events = self.ready.process(self.data)
+        super().async_update_listeners()
+        if events:
+            for listener in list(self._ready_listeners):
+                listener(events)
+
+    @callback
+    def async_subscribe_ready(self, listener):
+        """Call `listener(events)` for derived events; returns the unsubscribe callable."""
+        self._ready_listeners.append(listener)
+        return lambda: self._ready_listeners.remove(listener)
 
     async def _async_update_data(self):
         async with self._io_lock:

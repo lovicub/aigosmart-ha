@@ -137,6 +137,60 @@ class HATests(unittest.IsolatedAsyncioTestCase):
         self.c.last_update_success=False
         self.assertFalse(n.available)
 
+    def ready_model(self, *extra):
+        names = ('status', 'temperature', 'Target_temperature', 'HeatingSwitch', *extra)
+        return {'source': 'live-tsl', 'properties': [{'identifier': name} for name in names]}
+
+    def reading(self, switch, status, temp, mode=0, target=70):
+        return {'HeatingSwitch': {'value': switch}, 'status': {'value': status}, 'Mode': {'value': mode},
+                'temperature': {'value': temp}, 'Target_temperature': {'value': target}}
+
+    async def test_ready_events_reach_subscribers_and_the_binary_sensor(self):
+        from custom_components.aigosmart.binary_sensor import WaterReadySensor
+        self.c.model = self.ready_model()
+        sensor = WaterReadySensor(self.c)
+        received = []
+        unsubscribe = self.c.async_subscribe_ready(received.extend)
+        self.assertFalse(sensor.is_on)
+        self.c.async_set_updated_data(self.reading(1, 2, 30))
+        self.c.async_update_listeners()  # not new data: nothing is derived twice
+        self.assertEqual(received, [])
+        self.c.async_set_updated_data(self.reading(0, 1, 68))
+        self.assertEqual([event for event, _ in received], ['ready'])
+        self.assertTrue(sensor.is_on)
+        self.assertTrue(sensor.available)
+        self.assertIsNone(sensor.extra_state_attributes)
+        unsubscribe()
+        self.c.async_set_updated_data(self.reading(1, 2, 20))
+        self.c.async_set_updated_data(self.reading(0, 1, 68))
+        self.assertEqual(len(received), 1)
+        self.c.last_update_success = False
+        self.assertFalse(sensor.available)
+
+    async def test_water_event_entity_triggers_derived_events(self):
+        from custom_components.aigosmart.event import WaterEvent
+        self.c.model = self.ready_model()
+        event = WaterEvent(self.c)
+        self.assertEqual(event.event_types, ['ready', 'interrupted', 'keep_warm_finished'])
+        self.assertEqual(event.translation_key, 'water')
+        self.assertTrue(event.available)
+        with patch.object(WaterEvent, '_trigger_event') as trigger,                 patch.object(WaterEvent, 'async_write_ha_state') as write:
+            event._handle_ready([('ready', {'temperature': 68})])
+        trigger.assert_called_once_with('ready', {'temperature': 68})
+        write.assert_called_once_with()
+
+    async def test_ready_entities_are_created_only_for_supported_models(self):
+        from custom_components.aigosmart import binary_sensor, event
+        for model, count, created in ((self.ready_model(), 2, True), (MODEL, 1, False)):
+            self.c.model = model
+            entry = Mock(runtime_data=self.c)
+            add = Mock()
+            await binary_sensor.async_setup_entry(self.hass, entry, add)
+            self.assertEqual(len(add.call_args.args[0]), count)
+            add = Mock()
+            await event.async_setup_entry(self.hass, entry, add)
+            self.assertEqual(add.called, created)
+
     async def test_write_confirmed(self):
         self.assertEqual(await self.c.async_write('Target_temperature',80),'confirmed')
         self.client.write.assert_called_once()
