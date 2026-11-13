@@ -35,7 +35,7 @@ are preserved; heating commands are never replayed. See [changelog](CHANGELOG.md
 - Cloud polling every 15 seconds by default; configurable from 15 to 3600 seconds.
 - Live TSL access/type/range/step validation before writes.
 - One write attempt per action, no automatic retries, followed by confirmation reads.
-- English, German and Polish setup translations.
+- English, German, Italian and Polish setup translations.
 
 Only Target_temperature, Mode, heatpreservation and HeatingSwitch are writable.
 Status and Time remain read-only in this integration. Ranges and available controls

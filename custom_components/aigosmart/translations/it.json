@@ -1,0 +1,145 @@
+{
+  "title": "AigoSmart HA",
+  "config": {
+    "step": {
+      "user": {
+        "title": "AigoSmart HA",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        }
+      },
+      "security_code": {
+        "data": {
+          "send_code": "Invia email di verifica",
+          "security_code": "Codice di sicurezza"
+        }
+      },
+      "device": {
+        "data": {
+          "device": "Dispositivo"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Nuova autenticazione"
+      },
+      "reconfigure": {
+        "title": "Ricollega l'account",
+        "description": "Prosegui con la nuova autenticazione di Home Assistant per accedere di nuovo."
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossibile connettersi",
+      "invalid_auth": "Credenziali non valide",
+      "cannot_send_code": "Impossibile inviare il codice",
+      "invalid_code": "Codice di verifica rifiutato. Controlla il codice o richiedine uno nuovo."
+    },
+    "abort": {
+      "already_configured": "Dispositivo già configurato",
+      "no_devices": "Nessun dispositivo disponibile",
+      "wrong_account": "Usa l'account originale con il dispositivo originale",
+      "reauth_successful": "Autenticazione aggiornata",
+      "reauth_started": "Prosegui con la nuova autenticazione."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Intervallo di aggiornamento (secondi)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "mode_description": {
+        "name": "Descrizione modalità"
+      },
+      "status_description": {
+        "name": "Descrizione stato"
+      },
+      "target_temperature": {
+        "name": "Temperatura impostata"
+      },
+      "heat_preservation": {
+        "name": "Mantenimento al caldo"
+      },
+      "time": {
+        "name": "Tempo"
+      },
+      "status": {
+        "name": "Stato"
+      },
+      "session_time_remaining": {
+        "name": "Tempo rimanente sessione"
+      },
+      "last_successful_refresh": {
+        "name": "Ultimo rinnovo riuscito"
+      },
+      "authorization_status": {
+        "name": "Stato autorizzazione"
+      },
+      "last_successful_cloud_read": {
+        "name": "Ultima lettura cloud riuscita"
+      },
+      "last_successful_device_read": {
+        "name": "Ultima lettura dispositivo riuscita"
+      },
+      "last_failed_api_operation": {
+        "name": "Ultima operazione API fallita"
+      },
+      "last_refresh_attempt": {
+        "name": "Ultimo tentativo di rinnovo"
+      },
+      "last_refresh_result": {
+        "name": "Esito ultimo rinnovo"
+      },
+      "failed_refresh_count": {
+        "name": "Rinnovi falliti"
+      },
+      "connection_status": {
+        "name": "Stato connessione"
+      },
+      "iot_token_expires_at": {
+        "name": "Scadenza token IoT"
+      },
+      "refresh_token_expires_at": {
+        "name": "Scadenza token di refresh"
+      }
+    },
+    "select": {
+      "mode": {
+        "state": {
+          "0": "Ebollizione con un tocco",
+          "1": "Ebollizione e mantenimento al caldo",
+          "2": "Riscaldamento e mantenimento al caldo"
+        },
+        "name": "Modalità"
+      }
+    },
+    "button": {
+      "refresh_iot_token": {
+        "name": "Aggiorna token IoT ora"
+      }
+    },
+    "number": {
+      "target_temperature": {
+        "name": "Temperatura impostata"
+      },
+      "heat_preservation": {
+        "name": "Mantenimento al caldo"
+      }
+    },
+    "binary_sensor": {
+      "heating": {
+        "name": "Riscaldamento"
+      }
+    },
+    "switch": {
+      "heating": {
+        "name": "Riscaldamento"
+      }
+    }
+  }
+}
