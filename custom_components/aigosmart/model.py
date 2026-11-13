@@ -10,6 +10,12 @@ def text(value):
     return value
 
 
+def valid_identifier(value):
+    """Plain TSL identifier that cannot carry credentials or personal data."""
+    return (isinstance(value, str) and re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{0,63}', value) is not None
+            and not re.search(r'token|secret|password|email|ssid|address', value, re.I))
+
+
 def specs(value):
     if not isinstance(value, dict):
         return None
@@ -33,8 +39,7 @@ def parse_model(data):
         if not isinstance(prop, dict):
             raise ValueError('Invalid property')
         ident = prop.get('identifier')
-        if (not isinstance(ident, str) or not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{0,63}', ident)
-                or re.search(r'token|secret|password|email|ssid|address', ident, re.I) or ident in seen):
+        if not valid_identifier(ident) or ident in seen:
             raise ValueError('Invalid or duplicate identifier')
         seen.add(ident)
         dtype = prop.get('dataType', {})
@@ -91,3 +96,29 @@ def plan(report, identifier, value):
     return {'mode': 'dry-run', 'executed': False, 'method': 'POST',
             'path': '/thing/properties/set', 'api_version': '1.0.0',
             'params': {'iotId': '<selected-device>', 'items': {identifier: value}}}
+
+
+def parse_identifiers(data, section):
+    """Identifiers of the TSL `events` or `services`, for diagnostics only.
+
+    Keeps the identifier, the type and the identifiers of the output fields;
+    display names and descriptions are dropped. Never raises: anything that is
+    not recognisable is skipped, because this must not affect setup.
+    """
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except ValueError:
+            return []
+    items = data.get(section) if isinstance(data, dict) else None
+    if not isinstance(items, list):
+        return []
+    result = []
+    for item in items[:50]:
+        if not isinstance(item, dict) or not valid_identifier(item.get('identifier')):
+            continue
+        outputs = item.get('outputData')
+        fields = [field['identifier'] for field in outputs[:20] if isinstance(field, dict)
+                  and valid_identifier(field.get('identifier'))] if isinstance(outputs, list) else []
+        result.append({'identifier': item['identifier'], 'type': text(item.get('type')), 'output': fields})
+    return result

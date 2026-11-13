@@ -1,7 +1,7 @@
 """Shared API with single-attempt writes and live TSL validation."""
 import json
 from . import protocol as p
-from .model import parse_model, plan
+from .model import parse_identifiers, parse_model, plan
 
 class AigoClient(p.Client):
     def __init__(self, *args, **kwargs):
@@ -24,9 +24,10 @@ class AigoClient(p.Client):
             'action': 'LoginSecurity', 're_send_count': 0, 'captcha_token': ''}, smart=True)
 
     def model(self, device):
-        rows = parse_model(self.signed(p.IOT, p.TSL,
-            {'iotId': p.required(device, 'iotId')}, '1.0.4')['data'])
-        return {'source': 'live-tsl', 'properties': rows}
+        data = self.signed(p.IOT, p.TSL, {'iotId': p.required(device, 'iotId')}, '1.0.4')['data']
+        return {'source': 'live-tsl', 'properties': parse_model(data),
+                'events': parse_identifiers(data, 'events'),
+                'services': parse_identifiers(data, 'services')}
 
     def authorize_property_write(self, method, url, body):
         permission, self._permission = self._permission, None

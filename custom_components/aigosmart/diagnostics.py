@@ -1,6 +1,31 @@
 """Export only reviewed non-sensitive diagnostic values, including offline entries."""
 import time
 from .diagnostic_state import diagnostic_values, iso_timestamp
+from .protocol import anonymize
+
+
+def _model_summary(runtime):
+    """Declared (TSL) versus reported properties, to support other kettle models.
+
+    Declared rows come from model.parse_model, which already limits them to
+    identifiers, access, type and numeric constraints (display names and
+    descriptions are left out here). Reported values go through
+    protocol.anonymize: numeric telemetry only, everything else is redacted.
+    """
+    model = getattr(runtime, 'model', None)
+    model = model if isinstance(model, dict) else {}
+    data = getattr(runtime, 'data', None)
+
+    def listed(name):
+        value = model.get(name)
+        return [row for row in value if isinstance(row, dict)] if isinstance(value, list) else []
+    return {
+        'declared_properties': [{key: row.get(key) for key in ('identifier', 'access', 'data_type', 'constraints')}
+                                for row in listed('properties')],
+        'events': listed('events'),
+        'services': listed('services'),
+        'reported_properties': anonymize(data) if isinstance(data, dict) else [],
+    }
 
 
 async def async_get_config_entry_diagnostics(hass, entry):
@@ -9,6 +34,7 @@ async def async_get_config_entry_diagnostics(hass, entry):
     values = diagnostic_values(manager, entry.data)
     failed = manager.diagnostics.last_failed_api_operation if manager is not None else None
     return {
+        'model': _model_summary(runtime),
         # Keep the original download fields and numeric timestamp compatibility.
         'authorization_status': values['authorization_status'],
         'session_time_remaining': values['session_time_remaining'],
