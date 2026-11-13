@@ -137,6 +137,19 @@ class HATests(unittest.IsolatedAsyncioTestCase):
         self.c.last_update_success=False
         self.assertFalse(n.available)
 
+    async def test_numbers_are_available_before_the_device_reports_them(self):
+        from custom_components.aigosmart.number import PreservationNumber, TemperatureNumber
+        self.c.async_set_updated_data({'Mode': {'value': 1}, 'HeatingSwitch': {'value': 0}})
+        limits = {'min': 40, 'max': 90, 'step': 5}
+        for number in (TemperatureNumber(self.c, limits), PreservationNumber(self.c, limits)):
+            self.assertTrue(number.available)
+            self.assertIsNone(number.native_value)
+        self.c.async_write = AsyncMock()
+        await TemperatureNumber(self.c, limits).async_set_native_value(70)
+        self.c.async_write.assert_awaited_once_with('Target_temperature', 70)
+        self.c.last_update_success = False
+        self.assertFalse(TemperatureNumber(self.c, limits).available)
+
     async def test_write_confirmed(self):
         self.assertEqual(await self.c.async_write('Target_temperature',80),'confirmed')
         self.client.write.assert_called_once()
