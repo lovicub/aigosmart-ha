@@ -21,6 +21,11 @@ class AigoSensor(AigoEntity, SensorEntity):
         return {'Target_temperature': '°C', 'Time': 'min', 'heatpreservation': 'h'}.get(self.key)
 
     @property
+    def device_class(self):
+        return {'Target_temperature': SensorDeviceClass.TEMPERATURE, 'Time': SensorDeviceClass.DURATION,
+                'heatpreservation': SensorDeviceClass.DURATION}.get(self.key)
+
+    @property
     def extra_state_attributes(self):
         attributes = super().extra_state_attributes
         if self.key == 'status':
