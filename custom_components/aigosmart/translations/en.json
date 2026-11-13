@@ -58,6 +58,54 @@
       },
       "status_description": {
         "name": "Status description"
+      },
+      "target_temperature": {
+        "name": "Target temperature"
+      },
+      "heat_preservation": {
+        "name": "Keep warm"
+      },
+      "time": {
+        "name": "Time"
+      },
+      "status": {
+        "name": "Status"
+      },
+      "session_time_remaining": {
+        "name": "Session time remaining"
+      },
+      "last_successful_refresh": {
+        "name": "Last successful refresh"
+      },
+      "authorization_status": {
+        "name": "Authorization status"
+      },
+      "last_successful_cloud_read": {
+        "name": "Last successful cloud read"
+      },
+      "last_successful_device_read": {
+        "name": "Last successful device read"
+      },
+      "last_failed_api_operation": {
+        "name": "Last failed API operation"
+      },
+      "last_refresh_attempt": {
+        "name": "Last refresh attempt"
+      },
+      "last_refresh_result": {
+        "name": "Last refresh result"
+      },
+      "failed_refresh_count": {
+        "name": "Failed refresh count"
+      },
+      "connection_status": {
+        "name": "Connection status"
+      },
+      "iot_token_expires_at": {
+        "name": "IoT token expiration"
+      },
+      "refresh_token_expires_at": {
+        "name": "Refresh token expiration"
       }
     },
     "select": {
@@ -66,12 +114,48 @@
           "0": "One-click boil",
           "1": "Boil and keep warm",
           "2": "Heating and keep warm"
-        }
+        },
+        "name": "Mode"
       }
     },
     "button": {
       "refresh_iot_token": {
         "name": "Refresh IoT Token"
+      }
+    },
+    "number": {
+      "target_temperature": {
+        "name": "Target temperature"
+      },
+      "heat_preservation": {
+        "name": "Keep warm"
+      }
+    },
+    "binary_sensor": {
+      "heating": {
+        "name": "Heating"
+      },
+      "water_ready": {
+        "name": "Water ready"
+      }
+    },
+    "switch": {
+      "heating": {
+        "name": "Heating"
+      }
+    },
+    "event": {
+      "water": {
+        "name": "Water",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "ready": "Ready",
+              "interrupted": "Interrupted",
+              "keep_warm_finished": "Keep warm finished"
+            }
+          }
+        }
       }
     }
   }

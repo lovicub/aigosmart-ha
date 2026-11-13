@@ -58,6 +58,54 @@
       },
       "status_description": {
         "name": "Statusbeschreibung"
+      },
+      "target_temperature": {
+        "name": "Zieltemperatur"
+      },
+      "heat_preservation": {
+        "name": "Warmhalten"
+      },
+      "time": {
+        "name": "Zeit"
+      },
+      "status": {
+        "name": "Status"
+      },
+      "session_time_remaining": {
+        "name": "Verbleibende Sitzungszeit"
+      },
+      "last_successful_refresh": {
+        "name": "Letzte erfolgreiche Erneuerung"
+      },
+      "authorization_status": {
+        "name": "Autorisierungsstatus"
+      },
+      "last_successful_cloud_read": {
+        "name": "Letzter erfolgreicher Cloud-Abruf"
+      },
+      "last_successful_device_read": {
+        "name": "Letzter erfolgreicher Geräteabruf"
+      },
+      "last_failed_api_operation": {
+        "name": "Letzte fehlgeschlagene API-Operation"
+      },
+      "last_refresh_attempt": {
+        "name": "Letzter Erneuerungsversuch"
+      },
+      "last_refresh_result": {
+        "name": "Ergebnis der letzten Erneuerung"
+      },
+      "failed_refresh_count": {
+        "name": "Fehlgeschlagene Erneuerungen"
+      },
+      "connection_status": {
+        "name": "Verbindungsstatus"
+      },
+      "iot_token_expires_at": {
+        "name": "Ablauf IoT-Token"
+      },
+      "refresh_token_expires_at": {
+        "name": "Ablauf Refresh-Token"
       }
     },
     "select": {
@@ -66,12 +114,48 @@
           "0": "Ein-Klick-Kochen",
           "1": "Kochen und warmhalten",
           "2": "Erwärmen und warmhalten"
-        }
+        },
+        "name": "Modus"
       }
     },
     "button": {
       "refresh_iot_token": {
         "name": "IoT-Token erneuern"
+      }
+    },
+    "number": {
+      "target_temperature": {
+        "name": "Zieltemperatur"
+      },
+      "heat_preservation": {
+        "name": "Warmhalten"
+      }
+    },
+    "binary_sensor": {
+      "heating": {
+        "name": "Heizen"
+      },
+      "water_ready": {
+        "name": "Wasser bereit"
+      }
+    },
+    "switch": {
+      "heating": {
+        "name": "Heizen"
+      }
+    },
+    "event": {
+      "water": {
+        "name": "Wasser",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "ready": "Bereit",
+              "interrupted": "Unterbrochen",
+              "keep_warm_finished": "Warmhalten beendet"
+            }
+          }
+        }
       }
     }
   }
