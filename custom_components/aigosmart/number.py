@@ -1,4 +1,4 @@
-from homeassistant.components.number import NumberEntity
+from homeassistant.components.number import NumberDeviceClass, NumberEntity
 from .entity import AigoEntity
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -13,6 +13,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 class TemperatureNumber(AigoEntity, NumberEntity):
     _attr_native_unit_of_measurement = '°C'
+    _attr_device_class = NumberDeviceClass.TEMPERATURE
     property_key = 'Target_temperature'
     def __init__(self, coordinator, limits):
         super().__init__(coordinator, self.property_key)
@@ -34,3 +35,4 @@ class TemperatureNumber(AigoEntity, NumberEntity):
 class PreservationNumber(TemperatureNumber):
     property_key = 'heatpreservation'
     _attr_native_unit_of_measurement = 'h'
+    _attr_device_class = NumberDeviceClass.DURATION

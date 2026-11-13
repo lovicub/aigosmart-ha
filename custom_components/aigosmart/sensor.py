@@ -1,12 +1,17 @@
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.helpers.entity import EntityCategory
 from .entity import AigoEntity
 from .enum_labels import enum_key, enum_label, enum_labels
 from .diagnostic_state import SENSOR_NAMES, TIMESTAMP_KEYS, diagnostic_values, utc_datetime
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    async_add_entities([AigoSensor(entry.runtime_data, key) for key in
-        ('status', 'Target_temperature', 'Time', 'heatpreservation')] + [
+    c = entry.runtime_data
+    keys = ['status', 'Target_temperature', 'Time', 'heatpreservation']
+    # Current water temperature, reported by models whose TSL declares `temperature`.
+    if any(r['identifier'] == 'temperature' and r['data_type'] in ('int', 'float', 'double')
+           for r in c.model['properties']):
+        keys.append('temperature')
+    async_add_entities([AigoSensor(c, key) for key in keys] + [
         AigoSessionSensor(entry.runtime_data, key) for key in
         SENSOR_NAMES] + [AigoEnumDescriptionSensor(entry.runtime_data, key)
                         for key in ('Mode', 'status')])
@@ -18,7 +23,17 @@ class AigoSensor(AigoEntity, SensorEntity):
 
     @property
     def native_unit_of_measurement(self):
-        return {'Target_temperature': '°C', 'Time': 'min', 'heatpreservation': 'h'}.get(self.key)
+        return {'Target_temperature': '°C', 'temperature': '°C', 'Time': 'min',
+                'heatpreservation': 'h'}.get(self.key)
+
+    @property
+    def device_class(self):
+        return {'Target_temperature': SensorDeviceClass.TEMPERATURE, 'temperature': SensorDeviceClass.TEMPERATURE,
+                'Time': SensorDeviceClass.DURATION, 'heatpreservation': SensorDeviceClass.DURATION}.get(self.key)
+
+    @property
+    def state_class(self):
+        return SensorStateClass.MEASUREMENT if self.key == 'temperature' else None
 
     @property
     def extra_state_attributes(self):
@@ -33,9 +48,7 @@ class AigoSensor(AigoEntity, SensorEntity):
 class AigoEnumDescriptionSensor(AigoEntity, SensorEntity):
     """Add readable values without changing existing machine states or IDs."""
     def __init__(self, coordinator, key):
-        super().__init__(coordinator, key)
-        self._attr_name = None
-        self._attr_translation_key = f'{key.lower()}_description'
+        super().__init__(coordinator, key, translation_key=f'{key.lower()}_description')
 
     @property
     def native_value(self):
@@ -52,8 +65,7 @@ class AigoSessionSensor(AigoEntity, SensorEntity):
     _attr_entity_registry_enabled_default = False
 
     def __init__(self, coordinator, key):
-        super().__init__(coordinator, key)
-        self._attr_name = SENSOR_NAMES[key]
+        super().__init__(coordinator, key, translation_key=key)
         if key in TIMESTAMP_KEYS:
             self._attr_device_class = SensorDeviceClass.TIMESTAMP
 
