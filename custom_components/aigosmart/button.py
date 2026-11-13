@@ -13,12 +13,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 class AigoRefreshTokenButton(AigoEntity, ButtonEntity):
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_translation_key = 'refresh_iot_token'
     _attr_icon = 'mdi:refresh'
 
     def __init__(self, coordinator):
-        super().__init__(coordinator, 'refresh_iot_token')
-        self._attr_name = None
+        super().__init__(coordinator, 'refresh_iot_token', translation_key='refresh_iot_token')
 
     @property
     def available(self):
