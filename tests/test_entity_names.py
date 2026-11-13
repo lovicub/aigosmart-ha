@@ -95,6 +95,13 @@ class PropertyNameTests(unittest.TestCase):
     def test_all_languages_define_the_same_entity_names(self):
         def names(entity):
             return {(p, k): sorted(v) for p, group in entity.items() for k, v in group.items()}
+
+        def keys(node, path=()):
+            if not isinstance(node, dict):
+                return {path}
+            return {leaf for key, child in node.items() for leaf in keys(child, path + (key,))}
+        for code, language in LANGUAGES.items():
+            self.assertEqual(keys(language), keys(STRINGS), code)
         for code, language in LANGUAGES.items():
             self.assertEqual(names(language['entity']), names(STRINGS['entity']), code)
         self.assertEqual(LANGUAGES['en'], STRINGS)
